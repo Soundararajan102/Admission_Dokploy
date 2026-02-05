@@ -1,0 +1,506 @@
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+const logo = "/assets/kongunadulogo.png";
+
+const DiplomaScores = ({ personalData, setPersonalInfoErrors }) => {
+  const navigate = useNavigate();
+
+  const [fifthSemMarks, setFifthSemMarks] = useState("");
+  const [sixthSemMarks, setSixthSemMarks] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
+
+  // Google Apps Script endpoint
+  const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_STUDENT_URL;
+
+  // Degree list for conversion
+  const degree = [
+    { id: 1, department: "B.Tech - Artificial Intelligence and Data Science Engineering (AD)", short: "AD" },
+    { id: 2, department: "B.Tech - Agricultural Engineering (AG)", short: "AG" },
+    { id: 3, department: "B.E - Bio-Medical Engineering (BME)", short: "BME" },
+    { id: 4, department: "B.E - Computer Science and Engineering (CSE)", short: "CSE" },
+    { id: 5, department: "B.E - Civil Engineering (CIVIL)", short: "CIVIL" },
+    { id: 6, department: "B.E - Electronics and Communication Engineering (ECE)", short: "ECE" },
+    { id: 7, department: "B.E - Electrical and Electronics Engineering (EEE)", short: "EEE" },
+    { id: 8, department: "B.Tech - Information Technology (IT)", short: "IT" },
+    { id: 9, department: "B.E - Mechanical Engineering (MECH)", short: "MECH" },
+  ];
+
+  // Helper function to convert full department name to short form
+  const getShortForm = (departmentFullName) => {
+    if (!departmentFullName) return '';
+    const department = degree.find(d => d.department === departmentFullName);
+    return department ? department.short : departmentFullName;
+  };
+
+  // Field-level validation function
+  const validateField = (name, value) => {
+    const rules = {
+      program: {
+        minLength: 3,
+        maxLength: 60,
+        message: 'Program name must be 3-60 characters'
+      },
+      institution: {
+        minLength: 3,
+        maxLength: 60,
+        message: 'Institution name must be 3-60 characters'
+      },
+      registerNo: {
+        minLength: 3,
+        maxLength: 15,
+        pattern: /^[0-9]+$/,
+        message: 'Register number must be 3-15 digits only'
+      },
+      completionDate: {
+        pattern: /^[0-9]{4}$/,
+        message: 'Year must be exactly 4 digits'
+      }
+    };
+
+    const rule = rules[name];
+    if (!rule) return null;
+
+    const trimmedValue = typeof value === 'string' ? value.trim() : value;
+
+    if (!trimmedValue) {
+      return 'This field is required';
+    }
+
+    if (rule.minLength && trimmedValue.length < rule.minLength) {
+      return rule.message;
+    }
+
+    if (rule.maxLength && trimmedValue.length > rule.maxLength) {
+      return rule.message;
+    }
+
+    if (rule.pattern && !rule.pattern.test(trimmedValue)) {
+      return rule.message;
+    }
+
+    return null;
+  };
+
+  // Handle field blur for validation
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    const error = validateField(name, value);
+    
+    if (error) {
+      setValidationErrors(prev => ({ ...prev, [name]: error }));
+    } else {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  const handleSemesterMarkChange = (value, setter) => {
+    if (value === "") {
+      setter(value);
+      return;
+    }
+    const numVal = parseFloat(value);
+    if (!isNaN(numVal) && numVal >= 0 && numVal <= 100 && Number.isInteger(numVal)) {
+      setter(value);
+    }
+  };
+
+  // Upload files state
+  const [uploads, setUploads] = useState([]);
+
+  const [diplomaDetails, setDiplomaDetails] = useState({
+    program: '',
+    institution: '',
+    registerNo: '',
+    completionDate: ''
+  });
+
+
+
+  const handleNavigate = async () => {
+    // Validate personal info from prop (live data, not localStorage)
+    // STEP 1: Validate required diploma fields first
+    const errors = {};
+    
+    if (!diplomaDetails.program || diplomaDetails.program.trim() === '') {
+      errors.program = 'Department is required';
+    }
+    if (!diplomaDetails.institution || diplomaDetails.institution.trim() === '') {
+      errors.institution = 'Institution is required';
+    }
+    if (!diplomaDetails.registerNo || diplomaDetails.registerNo.trim() === '') {
+      errors.registerNo = 'Register/Roll No is required';
+    }
+    if (!diplomaDetails.completionDate || diplomaDetails.completionDate.trim() === '') {
+      errors.completionDate = 'Completion year is required';
+    }
+    if (!fifthSemMarks || fifthSemMarks.trim() === '') {
+      errors.fifthSemMarks = '5th semester marks are required';
+    }
+
+    // Check for academic validation errors
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      // Scroll to first error within this section
+      setTimeout(() => {
+        const section = document.getElementById('diploma-scores-form');
+        if (section) {
+          const firstErrorField = section.querySelector('.text-red-600');
+          if (firstErrorField) {
+            firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }
+      }, 100);
+      return;
+    }
+
+    // Clear validation errors
+    setValidationErrors({});
+
+    // STEP 2: Validate personal info from prop (live data, not localStorage)
+    const personalInfoErrors = [];
+    const personalInfoErrorsMap = {};
+    const requiredPersonalFields = [
+        { field: 'fullName', label: 'Full Name' },
+        { field: 'dob', label: 'Date of Birth' },
+        { field: 'gender', label: 'Gender' },
+        { field: 'fatherName', label: 'Father/Guardian Name' },
+        { field: 'community', label: 'Community' },
+        { field: 'address1', label: 'Address' },
+        { field: 'district', label: 'District' },
+        { field: 'pincode', label: 'Pin Code' },
+        { field: 'fatherContact', label: 'Contact Number' },
+        { field: 'sslcMarks', label: 'SSLC Marks' }
+    ];
+
+    requiredPersonalFields.forEach(({ field, label }) => {
+        if (!personalData || !personalData[field] || (typeof personalData[field] === 'string' && personalData[field].trim() === '')) {
+            personalInfoErrors.push(label);
+            personalInfoErrorsMap[field] = `${label} is required`;
+        }
+    });
+
+    if (personalInfoErrors.length > 0) {
+        // Use callback to set errors in PersonalInfo component
+        if (setPersonalInfoErrors) {
+            setPersonalInfoErrors(personalInfoErrorsMap);
+        }
+        // Scroll to PersonalInfo section
+        setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 100);
+        return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      
+      // Combine fullName with initial for submission
+      const combinedFullName = `${personalData.fullName || ''} ${personalData.initial || ''}`.trim();
+      
+      // Convert all string fields to uppercase
+      const uppercasePersonalData = Object.keys(personalData).reduce((acc, key) => {
+        const value = personalData[key];
+        acc[key] = typeof value === 'string' ? value.toUpperCase() : value;
+        return acc;
+      }, {});
+      
+      // Prepare combined data (personal + scores) - ALL IN UPPERCASE
+      const combinedData = {
+        action: "submitStudentData",
+        // Personal info fields - converted to uppercase
+        ...uppercasePersonalData,
+        fullName: combinedFullName.toUpperCase(),
+        initial: personalData.initial.toUpperCase(),
+        motherName: personalData.motherName.toUpperCase(),
+        motherOccupation: personalData.motherOccupation.toUpperCase(),
+        // Convert all preferences to short form
+        preference1: getShortForm(personalData.preference1),
+        preference2: getShortForm(personalData.preference2),
+        preference3: getShortForm(personalData.preference3),
+        preference4: getShortForm(personalData.preference4),
+        preference5: getShortForm(personalData.preference5),
+        preference6: getShortForm(personalData.preference6),
+        preference7: getShortForm(personalData.preference7),
+        preference8: getShortForm(personalData.preference8),
+        preference9: getShortForm(personalData.preference9),
+        // SSLC fields (from PersonalInfo form)
+        sslcMarks: personalData.sslcMarks,
+        govtSchool: personalData.govtSchool,
+        schoolType: personalData.schoolType,
+        schoolName: diplomaDetails.diplomaInstitution || "",  // ✅ ADDED: Include schoolName from diploma institution
+        // Score fields - all text in uppercase
+        courseType: "DIPLOMA",
+        registerNumber: diplomaDetails.registerNo.toUpperCase(),
+        medium: diplomaDetails.program.toUpperCase(),
+        yearOfPassing: diplomaDetails.completionDate,
+        subject1: "1ST TO 5TH SEMESTER",
+        subject1Marks: fifthSemMarks,
+        subject2: "1ST TO 6TH SEMESTER",
+        subject2Marks: sixthSemMarks,
+        date: new Date().toISOString()
+      };
+
+
+      // Send to Google Apps Script
+      const params = new URLSearchParams(combinedData).toString();
+      const url = `${GOOGLE_SCRIPT_URL}?${params}`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.enquiryId) {
+        // Save enquiry ID to localStorage
+        localStorage.setItem('enquiryId', result.enquiryId);
+        localStorage.setItem('studentName', combinedFullName);
+        
+        setIsLoading(false);
+        navigate("/success", { state: { enquiryId: result.enquiryId } });
+      } else {
+        setIsLoading(false);
+        alert("Error: " + (result.message || "Failed to save data"));
+      }
+    } catch (error) {
+      console.error("Submit error:", error);
+      setIsLoading(false);
+      alert("Error: " + error.message);
+    }
+  }
+
+  const handleUploadChange = (e) => {
+    const files = Array.from(e.target.files);
+    setUploads(files);
+  };
+
+  // Validation Error Display Component
+  const ValidationError = ({ fieldName }) => {
+    if (!validationErrors[fieldName]) return null;
+    return (
+      <div className="flex items-center gap-2 mt-2 text-red-600 text-sm">
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+        </svg>
+        <span>{validationErrors[fieldName]}</span>
+      </div>
+    );
+  };
+
+
+
+
+
+  return (
+    <>
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
+          <img src={logo} alt="KNCET Logo" className="h-24 w-auto mb-6" />
+          <div className="flex flex-col items-center">
+            <div className="relative">
+              <div className="animate-spin rounded-full h-16 w-16 border-3 border-gray-200"></div>
+              <div className="animate-spin rounded-full h-16 w-16 border-3 border-blue-600 border-t-transparent absolute top-0 left-0"></div>
+            </div>
+            <p className="text-xl font-semibold text-gray-900 mt-5">Saving your information</p>
+            <p className="text-sm text-gray-500 mt-2">Please wait a moment</p>
+          </div>
+        </div>
+      )}
+
+      <section id="diploma-scores-form" className="bg-white border border-gray-200 overflow-hidden">
+        <div className="bg-gray-50 px-8 py-5 border-b border-gray-200">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center">
+            Diploma Scores
+          </h2>
+        </div>
+
+        <div className="p-8 sm:p-10 md:p-12 space-y-10 sm:space-y-12">
+          {/* details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">Department<span className="text-red-600">*</span></label>
+              <input
+                type="text"
+                name="program"
+                value={diplomaDetails.program}
+                onChange={(e) => {
+                  setDiplomaDetails({ ...diplomaDetails, program: e.target.value.toUpperCase() });
+                  if (validationErrors.program) {
+                    setValidationErrors(prev => {
+                      const newErrors = { ...prev };
+                      delete newErrors.program;
+                      return newErrors;
+                    });
+                  }
+                }}
+                onBlur={handleBlur}
+                className="w-full px-4 py-2.5 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-400"
+                placeholder="Enter Your Diploma Department"
+                style={{ textTransform: 'uppercase' }}
+                minLength={3}
+                maxLength={60}
+                required
+              />
+              <ValidationError fieldName="program" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">Institution<span className="text-red-600">*</span></label>
+              <input
+                type="text"
+                name="institution"
+                value={diplomaDetails.institution}
+                onChange={(e) => {
+                  setDiplomaDetails({ ...diplomaDetails, institution: e.target.value.toUpperCase() });
+                  if (validationErrors.institution) {
+                    setValidationErrors(prev => {
+                      const newErrors = { ...prev };
+                      delete newErrors.institution;
+                      return newErrors;
+                    });
+                  }
+                }}
+                onBlur={handleBlur}
+                className="w-full px-4 py-2.5 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-400"
+                placeholder="Enter Your Institution"
+                style={{ textTransform: 'uppercase' }}
+                minLength={3}
+                maxLength={60}
+                required
+              />
+              <ValidationError fieldName="institution" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">Register/Roll No<span className="text-red-600">*</span></label>
+              <input
+                type="text"
+                name="registerNo"
+                value={diplomaDetails.registerNo}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, '');
+                  setDiplomaDetails({ ...diplomaDetails, registerNo: value });
+                  if (validationErrors.registerNo) {
+                    setValidationErrors(prev => {
+                      const newErrors = { ...prev };
+                      delete newErrors.registerNo;
+                      return newErrors;
+                    });
+                  }
+                }}
+                onBlur={handleBlur}
+                className="w-full px-4 py-2.5 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-400"
+                placeholder="Enter Your Register/Roll No"
+                style={{ textTransform: 'uppercase' }}
+                minLength={3}
+                maxLength={15}
+                required
+              />
+              <ValidationError fieldName="registerNo" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">Completion year <span className="text-red-600">*</span></label>
+              <select
+                name="completionDate"
+                value={diplomaDetails.completionDate}
+                onChange={(e) => {
+                  setDiplomaDetails({ ...diplomaDetails, completionDate: e.target.value });
+                  if (validationErrors.completionDate) {
+                    setValidationErrors(prev => {
+                      const newErrors = { ...prev };
+                      delete newErrors.completionDate;
+                      return newErrors;
+                    });
+                  }
+                }}
+                className="w-full px-4 py-2.5 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-400"
+                required
+              >
+                <option value=""disabled>Select Year</option>
+                {Array.from({ length: 11 }, (_, i) => 2018 + i).map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <ValidationError fieldName="completionDate" />
+            </div>
+          </div>
+
+
+
+          {/* Semester Marks */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 mt-6">
+            {/* upto 5th sem */}
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">
+                1st to 5th semester (%)<span className="text-red-600">*</span>
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={fifthSemMarks}
+                onChange={(e) => {
+                  handleSemesterMarkChange(e.target.value, setFifthSemMarks);
+                  if (validationErrors.fifthSemMarks) {
+                    setValidationErrors(prev => {
+                      const newErrors = { ...prev };
+                      delete newErrors.fifthSemMarks;
+                      return newErrors;
+                    });
+                  }
+                }}
+                className="w-full px-4 py-2.5 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-400"
+                placeholder="Enter Your Up 1st To 5th Semester Marks"
+              />
+              <ValidationError fieldName="fifthSemMarks" />
+            </div>
+
+
+            {/* upto 6th sem */}
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">
+                1st to 6th semester (%)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                value={sixthSemMarks}
+                onChange={(e) => handleSemesterMarkChange(e.target.value, setSixthSemMarks)}
+                className="w-full px-4 py-2.5 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-400"
+                placeholder="Enter Your Up 1st To 6th Semester Marks"
+              />
+            </div>
+
+
+            
+          </div>
+
+          
+
+          {/* Submit */}
+          <div className="mt-6 flex justify-end items-center gap-4">
+            <button
+              type="submit"
+              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all duration-200 cursor-pointer"
+              onClick={handleNavigate}
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+};
+
+export default DiplomaScores;
+
+
