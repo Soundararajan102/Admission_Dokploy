@@ -430,7 +430,7 @@ const AcademicScores = ({ personalData, setPersonalInfoErrors }) => {
               <ValidationError fieldName="schoolName" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2">Register Number <span className="text-red-600"></span></label>
+              <label className="block text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2">Register Number </label>
               <input
                 type="text"
                 name="registerNumber"

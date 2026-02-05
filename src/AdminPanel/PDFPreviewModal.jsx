@@ -160,63 +160,80 @@ export default function PDFPreviewModal({
           const actualName = resolveFieldName(fieldName);
           if (!actualName) return false;
           const field = form.getField(actualName);
-          const acroField = field.acroField;
-          const kidsArray = acroField.Kids();
           
-          if (!kidsArray) {
-            console.warn(`No widgets found for ${fieldName}`);
-            return false;
-          }
-          
-          const numKids = kidsArray.size();
-          let foundMatch = false;
-          let availableOptions = []; // Track all available options
-          
-          for (let i = 0; i < numKids; i++) {
-            try {
-              const widget = kidsArray.lookup(i);
-              
-              if (!widget) continue;
-              
-              const ap = widget.lookup(PDFName.of('AP'));
-              
-              if (ap) {
-                const n = ap.lookup(PDFName.of('N'));
+          // Use the high-level API to select the radio button
+          try {
+            field.select(exportValue);
+            console.log(`✓ Set ${fieldName} = ${exportValue}`);
+            return true;
+          } catch (selectError) {
+            // If high-level API fails, try low-level approach
+            const acroField = field.acroField;
+            const kidsArray = acroField.Kids();
+            
+            if (!kidsArray) {
+              console.warn(`No widgets found for ${fieldName}`);
+              return false;
+            }
+            
+            const numKids = kidsArray.size();
+            let foundMatch = false;
+            let availableOptions = []; // Track all available options
+            
+            for (let i = 0; i < numKids; i++) {
+              try {
+                const widget = kidsArray.lookup(i);
                 
-                if (n && n.entries) {
-                  for (const [key, val] of n.entries()) {
-                    const keyStr = key.decodeText ? key.decodeText() : key.toString().replace(/^\//, '');
-                    
-                    // Collect all available options (excluding 'Off')
-                    if (keyStr !== 'Off' && !availableOptions.includes(keyStr)) {
-                      availableOptions.push(keyStr);
-                    }
-                    
-                    if (keyStr === exportValue && keyStr !== 'Off') {
-                      // Set the appearance state to the export value
-                      widget.set(PDFName.of('AS'), PDFName.of(exportValue));
-                      // Also set the field value
-                      widget.set(PDFName.of('V'), PDFName.of(exportValue));
-                      foundMatch = true;
-                    } else if (keyStr !== exportValue && keyStr !== 'Off') {
-                      // Uncheck other options in the group
-                      widget.set(PDFName.of('AS'), PDFName.of('Off'));
+                if (!widget) continue;
+                
+                const ap = widget.lookup(PDFName.of('AP'));
+                
+                if (ap) {
+                  const n = ap.lookup(PDFName.of('N'));
+                  
+                  if (n && n.entries) {
+                    for (const [key, val] of n.entries()) {
+                      const keyStr = key.decodeText ? key.decodeText() : key.toString().replace(/^\//, '');
+                      
+                      // Collect all available options (excluding 'Off')
+                      if (keyStr !== 'Off' && !availableOptions.includes(keyStr)) {
+                        availableOptions.push(keyStr);
+                      }
+                      
+                      if (keyStr === exportValue && keyStr !== 'Off') {
+                        // Set the appearance state to the export value on the widget
+                        widget.set(PDFName.of('AS'), PDFName.of(exportValue));
+                        foundMatch = true;
+                      } else if (keyStr !== exportValue && keyStr !== 'Off') {
+                        // Uncheck other options in the group
+                        widget.set(PDFName.of('AS'), PDFName.of('Off'));
+                      }
                     }
                   }
                 }
+              } catch (widgetError) {
+                continue;
               }
-            } catch (widgetError) {
-              continue;
             }
-          }
-          
-          if (!foundMatch) {
-            console.warn(`⚠ Export value '${exportValue}' not found in ${fieldName}`);
-            if (availableOptions.length > 0) {
-              console.warn(`   Available options in ${fieldName}:`, availableOptions);
+            
+            // Set the field value using the context method
+            if (foundMatch) {
+              try {
+                acroField.dict.set(PDFName.of('V'), PDFName.of(exportValue));
+                console.log(`✓ Set ${fieldName} = ${exportValue} (low-level)`);
+              } catch (dictError) {
+                console.warn(`Could not set field value for ${fieldName}:`, dictError.message);
+              }
             }
+            
+            if (!foundMatch) {
+              console.warn(`⚠ Export value '${exportValue}' not found in ${fieldName}`);
+              if (availableOptions.length > 0) {
+                console.warn(`   Available options in ${fieldName}:`, availableOptions);
+              }
+            }
+            return foundMatch;
           }
-          return foundMatch;
         } catch (error) {
           console.warn(`✗ Could not set ${fieldName}:`, error.message);
           return false;
@@ -224,7 +241,7 @@ export default function PDFPreviewModal({
       };
 
       // Helper function to safely set text field value
-      const setTextField = (fieldName, value) => {
+      const setTextField = (fieldName, value, options = {}) => {
         try {
           const actualName = resolveFieldName(fieldName);
           if (!actualName) return;
@@ -232,6 +249,13 @@ export default function PDFPreviewModal({
           if (field && value !== undefined && value !== null && value !== '') {
             const stringValue = String(value);
             field.setText(stringValue);
+            
+            // Apply font size if specified
+            if (options.fontSize !== undefined) {
+              const calculatedSize = options.fontSize;
+              const finalSize = Math.min(calculatedSize, 12);
+              field.setFontSize(finalSize);
+            }
           }
         } catch (error) {
           console.warn(`✗ Could not set text field '${fieldName}':`, error.message);
@@ -262,7 +286,9 @@ export default function PDFPreviewModal({
       setTextField('admission-id', studentData.admissionId ||studentData.id || '');
       setTextField('date', formatDateForPDF(studentData.applicationDate || ''));
       setTextField('name', studentData.fullName || ''); 
-      setTextField('date-of-birth', formatDateForPDF(studentData.dob));
+      const dobValue = formatDateForPDF(studentData.dob);
+      const dobFontSize = dobValue.length > 10 ? 10 : 12;
+      setTextField('date-of-birth', dobValue, { fontSize: Math.min(dobFontSize, 12) });
       
       // Gender - checkbox group
       if (studentData.gender === 'MALE' || studentData.gender === 'Male') {
@@ -397,12 +423,18 @@ export default function PDFPreviewModal({
       setTextField('father/guardian-occupation', studentData.fatherOccupation || '');
       setTextField('family-income', studentData.annualIncome || '');
       
-      // Pad caste with spaces if length is less than 10
-      const casteValue = (studentData.caste === 'NOT REQUIRED' || studentData.community === 'OC') ? '--' : (studentData.caste || '');
-      const paddedCaste = casteValue && casteValue.length < 20 && casteValue !== '--'
-        ? casteValue.padEnd(25, ' ')
-        : casteValue;
-      setTextField('caste', paddedCaste);
+      // Set caste field with dynamic font size
+      const casteRawValue = studentData.caste || '';
+      const casteValue = casteRawValue.length > 18 
+        ? casteRawValue 
+        : ((studentData.caste === 'NOT REQUIRED' || studentData.community === 'OC') ? '-' : casteRawValue);
+      
+      // If length < 18, use fontSize 12; otherwise pass original data without fontSize
+      if (casteValue.length < 18) {
+        setTextField('caste', casteValue, { fontSize: 12 });
+      } else {
+        setTextField('caste', casteValue);
+      }
 
       // Community
       const communityMap = {
@@ -517,14 +549,28 @@ export default function PDFPreviewModal({
       const academicMedium = scoresData?.medium || (chooseDiplomaValue('diplomaProgram', 'mediumOfStudy', 'vocationalMediumOfStudy', 'medium') || 'English');
       const academicYearOfPassing = scoresData?.yearOfPassing || chooseDiplomaValue('diplomaCompletionYear', 'yearOfPassing', 'vocationalYearOfPassing', 'passingYear');
       
-      // Pad school name with spaces if length is less than 50
-      const paddedSchoolName = academicSchoolName && academicSchoolName.length < 26
-        ? academicSchoolName.padEnd(37, ' ') 
-        : academicSchoolName;
-      setTextField('name-and-place-of-college', paddedSchoolName);
+      // School name - if length < 29, use fontSize 12; otherwise pass original data without fontSize
+      if (academicSchoolName && academicSchoolName.length < 29) {
+        setTextField('name-and-place-of-college', academicSchoolName, { fontSize: 12 });
+      } else {
+        setTextField('name-and-place-of-college', academicSchoolName);
+      }
       setTextField('register-no', academicRegisterNo);
-      setTextField('type-studies', academicCourseType);
-      setTextField('medium-of-study', academicMedium);
+      
+      // Type studies - if length < 5, use fontSize 12; otherwise pass original data without fontSize
+      if (academicCourseType && academicCourseType.length < 5) {
+        setTextField('type-studies', academicCourseType, { fontSize: 12 });
+      } else {
+        setTextField('type-studies', academicCourseType);
+      }
+      
+      // Medium of study - if length < 6, use fontSize 12; otherwise pass original data without fontSize
+      if (academicMedium && academicMedium.length < 5) {
+        setTextField('medium-of-study', academicMedium, { fontSize: 12 });
+      } else {
+        setTextField('medium-of-study', academicMedium);
+      }
+      
       setTextField('year-of-passing', academicYearOfPassing);
 
       // SSLC Marks
@@ -738,6 +784,47 @@ export default function PDFPreviewModal({
         
       }
 
+      // CRITICAL: Ensure all radio buttons have proper appearance states set
+      // before updating field appearances
+      const allFields = form.getFields();
+      console.log('=== Verifying Radio Button States Before PDF Generation ===');
+      allFields.forEach(field => {
+        try {
+          const fieldType = field.constructor.name;
+          if (fieldType === 'PDFRadioGroup') {
+            const acroField = field.acroField;
+            const fieldValue = acroField.V();
+            const kidsArray = acroField.Kids();
+            const fieldName = field.getName();
+            
+            if (kidsArray && fieldValue) {
+              const selectedValue = fieldValue.toString().replace(/^\//, '');
+              console.log(`Radio Group '${fieldName}': selected = '${selectedValue}'`);
+              const numKids = kidsArray.size();
+              
+              for (let i = 0; i < numKids; i++) {
+                const widget = kidsArray.lookup(i);
+                if (!widget) continue;
+                
+                const currentAS = widget.lookup(PDFName.of('AS'));
+                if (currentAS) {
+                  const asValue = currentAS.toString().replace(/^\//, '');
+                  // Ensure selected widget is marked correctly
+                  if (asValue === selectedValue) {
+                    widget.set(PDFName.of('AS'), PDFName.of(selectedValue));
+                    console.log(`  Widget ${i}: SET to '${selectedValue}'`);
+                  } else if (asValue !== 'Off') {
+                    widget.set(PDFName.of('AS'), PDFName.of('Off'));
+                  }
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.warn('Error processing radio field:', err);
+        }
+      });
+
       // Force pdf-lib to regenerate widget appearances so text is visible in viewers
       form.updateFieldAppearances(defaultFont);
 
@@ -758,6 +845,138 @@ export default function PDFPreviewModal({
 
     } catch (error) {
       console.error('Error generating PDF:', error);
+      throw error;
+    }
+  };
+
+  /**
+   * Flatten a PDF to make all form fields non-editable
+   * This creates a static PDF from the fillable form
+   */
+  const flattenPDF = async (pdfBytes) => {
+    try {
+      // Load the PDF
+      const pdfDoc = await PDFDocument.load(pdfBytes);
+      const form = pdfDoc.getForm();
+      const defaultFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+      // CRITICAL: Process all radio buttons and checkboxes BEFORE updateFieldAppearances
+      const allFields = form.getFields();
+      
+      // Log all fields for debugging
+      console.log('=== Flattening PDF - Processing Fields ===');
+      
+      allFields.forEach(field => {
+        try {
+          const fieldType = field.constructor.name;
+          const fieldName = field.getName();
+          
+          if (fieldType === 'PDFRadioGroup') {
+            const acroField = field.acroField;
+            const fieldValue = acroField.V();
+            const kidsArray = acroField.Kids();
+            
+            if (fieldValue) {
+              const selectedValue = fieldValue.toString().replace(/^\//, '');
+              console.log(`📻 Radio Group '${fieldName}' selected value: '${selectedValue}'`);
+              
+              if (kidsArray) {
+                const numKids = kidsArray.size();
+                let widgetFound = false;
+                
+                for (let i = 0; i < numKids; i++) {
+                  const widget = kidsArray.lookup(i);
+                  if (!widget) continue;
+                  
+                  try {
+                    const ap = widget.lookup(PDFName.of('AP'));
+                    
+                    if (ap) {
+                      const n = ap.lookup(PDFName.of('N'));
+                      
+                      if (n && n.entries) {
+                        // Check all appearance entries for this widget
+                        for (const [key, val] of n.entries()) {
+                          const keyStr = key.toString().replace(/^\//, '');
+                          
+                          // If this appearance matches the selected value
+                          if (keyStr === selectedValue && keyStr !== 'Off') {
+                            console.log(`  ✓ Widget ${i}: Found matching appearance '${selectedValue}'`);
+                            // Set this widget as selected
+                            widget.set(PDFName.of('AS'), PDFName.of(selectedValue));
+                            // Make sure field value is set using dict
+                            try {
+                              acroField.dict.set(PDFName.of('V'), PDFName.of(selectedValue));
+                            } catch (e) {
+                              // Already set, ignore
+                            }
+                            widgetFound = true;
+                          } else if (keyStr !== 'Off') {
+                            // This is a different option - ensure it's not selected
+                            const currentAS = widget.lookup(PDFName.of('AS'));
+                            if (currentAS) {
+                              const currentValue = currentAS.toString().replace(/^\//, '');
+                              if (currentValue === keyStr && keyStr !== selectedValue) {
+                                widget.set(PDFName.of('AS'), PDFName.of('Off'));
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  } catch (widgetErr) {
+                    console.warn(`  ⚠ Error processing widget ${i}:`, widgetErr.message);
+                  }
+                }
+                
+                if (!widgetFound) {
+                  console.warn(`  ⚠ No widget found with appearance '${selectedValue}' for ${fieldName}`);
+                }
+              }
+            } else {
+            }
+          } else if (fieldType === 'PDFCheckBox') {
+            const acroField = field.acroField;
+            const fieldValue = acroField.V();
+            const kidsArray = acroField.Kids();
+            
+            if (fieldValue) {
+              const checkValue = fieldValue.toString().replace(/^\//, '');
+            }
+            
+            if (kidsArray) {
+              const numKids = kidsArray.size();
+              for (let i = 0; i < numKids; i++) {
+                const widget = kidsArray.lookup(i);
+                if (widget) {
+                  const currentAS = widget.lookup(PDFName.of('AS'));
+                  if (!currentAS) {
+                    widget.set(PDFName.of('AS'), PDFName.of('Off'));
+                  }
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.warn(`❌ Error processing field '${field.getName()}':`, err.message);
+        }
+      });
+
+      // Update field appearances - this generates the visual representation
+      form.updateFieldAppearances(defaultFont);
+
+      // Flatten the form to make it static (non-editable)
+      form.flatten();
+
+      // Save the flattened PDF
+      const flattenedBytes = await pdfDoc.save({
+        useObjectStreams: false,
+        addDefaultPage: false
+      });
+
+      return flattenedBytes;
+    } catch (error) {
+      console.error('Error flattening PDF:', error);
       throw error;
     }
   };
@@ -793,17 +1012,25 @@ export default function PDFPreviewModal({
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (generatedPdfBytes) {
-      const blob = new Blob([generatedPdfBytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = generateFileName();
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      try {
+        // Flatten the PDF to make it non-editable before downloading
+        const flattenedBytes = await flattenPDF(generatedPdfBytes);
+        
+        const blob = new Blob([flattenedBytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = generateFileName();
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Error downloading PDF:', error);
+        alert('Error downloading PDF: ' + error.message);
+      }
     }
   };
 

@@ -80,11 +80,11 @@ const VocationalScores = ({ personalData, setPersonalInfoErrors }) => {
 
         const trimmedValue = typeof value === 'string' ? value.trim() : value;
 
-        if (!trimmedValue && name !== 'otherMedium') {
+        if (!trimmedValue && name !== 'otherMedium' && name !== 'registerNumber') {
             return 'This field is required';
         }
 
-        if (name === 'otherMedium' && !trimmedValue) {
+        if ((name === 'otherMedium' || name === 'registerNumber') && !trimmedValue) {
             return null;
         }
 
@@ -153,9 +153,7 @@ const VocationalScores = ({ personalData, setPersonalInfoErrors }) => {
         if (!schoolName || schoolName.trim() === '') {
             errors.schoolName = 'School Name is required';
         }
-        if (!registerNumber || registerNumber.trim() === '') {
-            errors.registerNumber = 'Register Number is required';
-        }
+        
         if (!mediumOfStudy) {
             errors.mediumOfStudy = 'Medium of Study is required';
         }
@@ -164,6 +162,15 @@ const VocationalScores = ({ personalData, setPersonalInfoErrors }) => {
         }
         if (!yearOfPassing || yearOfPassing.trim() === '') {
             errors.yearOfPassing = 'Year of Passing is required';
+        }
+
+        // Validate dynamic subjects (indices 3, 4, 5) - subject name is mandatory
+        for (let i = 3; i <= 5; i++) {
+            const subjectName = scores[i].subject.trim();
+            
+            if (!subjectName) {
+                errors[`subject${i + 1}Name`] = `Subject ${i + 1} name is required`;
+            }
         }
 
         // Check for academic validation errors
@@ -219,9 +226,6 @@ const VocationalScores = ({ personalData, setPersonalInfoErrors }) => {
             }, 100);
             return;
         }
-
-        // Check if all scores are entered
-        const allScoresEntered = scores.every(s => s.obtained && s.obtained.trim() !== "");
 
         setIsLoading(true);
 
@@ -332,14 +336,26 @@ const VocationalScores = ({ personalData, setPersonalInfoErrors }) => {
         // Get Mathematics mark (index 2)
         const math = parseFloat(scores[2]?.obtained) || 0;
         
-        // Get editable subject marks (indices 3, 4, 5)
-        const subject3 = parseFloat(scores[3]?.obtained) || 0;
-        const subject4 = parseFloat(scores[4]?.obtained) || 0;
-        const subject5 = parseFloat(scores[5]?.obtained) || 0;
+        // Get editable subject marks (indices 3, 4, 5) - only count filled subjects
+        const optionalSubjects = [];
+        for (let i = 3; i <= 5; i++) {
+            const mark = parseFloat(scores[i]?.obtained);
+            if (!isNaN(mark) && scores[i]?.obtained?.trim() !== '') {
+                optionalSubjects.push(mark);
+            }
+        }
 
-        // Cutoff Formula: (subject3 + subject4 + subject5) / 3 + Mathematics
-        const cutoffValue = ((subject3 + subject4 + subject5) / 3) + math;
-        return cutoffValue > 0 ? cutoffValue.toFixed(2) : "0.00";
+        // Cutoff Formula: average of filled optional subjects + Mathematics
+        if (optionalSubjects.length === 0 && math === 0) {
+            return "0.00";
+        }
+        
+        const optionalAverage = optionalSubjects.length > 0 
+            ? optionalSubjects.reduce((a, b) => a + b, 0) / optionalSubjects.length 
+            : 0;
+        
+        const cutoffValue = optionalAverage + math;
+        return cutoffValue.toFixed(2);
     };
 
     const cutoff = calculateCutoff();
@@ -350,18 +366,21 @@ const VocationalScores = ({ personalData, setPersonalInfoErrors }) => {
         // Get Mathematics mark (index 2)
         const math = parseFloat(scores[2]?.obtained) || 0;
         
-        // Get editable subject marks (indices 3, 4, 5)
-        const subject3 = parseFloat(scores[3]?.obtained) || 0;
-        const subject4 = parseFloat(scores[4]?.obtained) || 0;
-        const subject5 = parseFloat(scores[5]?.obtained) || 0;
+        // Get editable subject marks (indices 3, 4, 5) - only count filled subjects
+        const filledSubjects = [math];
+        for (let i = 3; i <= 5; i++) {
+            const mark = parseFloat(scores[i]?.obtained);
+            if (!isNaN(mark) && scores[i]?.obtained?.trim() !== '') {
+                filledSubjects.push(mark);
+            }
+        }
 
-        // Eligibility Formula: (Mathematics + subject3 + subject4 + subject5) / 4
-        const eligibilityScore = (math + subject3 + subject4 + subject5) / 4;
-        
-        if (math === 0 && subject3 === 0 && subject4 === 0 && subject5 === 0) {
+        // Eligibility Formula: average of Mathematics + filled optional subjects
+        if (filledSubjects.every(m => m === 0)) {
             return "";
         }
 
+        const eligibilityScore = filledSubjects.reduce((a, b) => a + b, 0) / filledSubjects.length;
         return eligibilityScore.toFixed(2);
     };
 
@@ -457,7 +476,7 @@ const VocationalScores = ({ personalData, setPersonalInfoErrors }) => {
                             <ValidationError fieldName="schoolName" />
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">Register Number <span className="text-red-600">*</span></label>
+                            <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">Register Number </label>
                             <input
                                 type="text"
                                 name="registerNumber"
@@ -576,34 +595,64 @@ const VocationalScores = ({ personalData, setPersonalInfoErrors }) => {
                             </thead>
                             <tbody>
                                 {scores.map((s, idx) => (
-                                    <tr key={idx} className="text-sm">
-                                        <td className="p-3 border">
-                                            {(idx === 0 || idx === 1 || idx === 2) ? (
-                                                <div className="p-3">{s.subject}</div>
-                                            ) : (
+                                    <React.Fragment key={idx}>
+                                        <tr className="text-sm">
+                                            <td className="p-3 border">
+                                                {(idx === 0 || idx === 1 || idx === 2) ? (
+                                                    <div className="p-3">{s.subject} </div>
+                                                ) : (
+                                                    <>
+                                                        <input
+                                                            type="text"
+                                                            value={s.subject}
+                                                            onChange={(e) => {
+                                                                handleSubjectChange(idx, e.target.value);
+                                                                if (validationErrors[`subject${idx + 1}Name`]) {
+                                                                    setValidationErrors(prev => {
+                                                                        const newErrors = { ...prev };
+                                                                        delete newErrors[`subject${idx + 1}Name`];
+                                                                        return newErrors;
+                                                                    });
+                                                                }
+                                                            }}
+                                                            placeholder="Enter Your Subject *"
+                                                            className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 p-3"
+                                                            style={{ textTransform: 'uppercase' }}
+                                                        />
+                                                    </>
+                                                )}
+                                            </td>
+                                            <td className="p-3 border text-center">{s.max}</td>
+                                            <td className="p-3 border">
                                                 <input
                                                     type="text"
-                                                    value={s.subject}
-                                                    onChange={(e) => handleSubjectChange(idx, e.target.value)}
-                                                    placeholder="Enter Your Subject"
-                                                    className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 p-3 "
-                                                    style={{ textTransform: 'uppercase' }} />
-                                            )}
-                                        </td>
-                                        {/* <td className="p-3 border">{s.subject}</td> */}
-                                        <td className="p-3 border text-center">{s.max}</td>
-                                        <td className="p-3 border">
-                                            <input
-                                                type=""
-                                                min="0"
-                                                max="100"
-                                                value={s.obtained}
-                                                onChange={(e) => handleScoreChange(idx, e.target.value)}
-                                                placeholder="Enter Marks"
-                                                className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 p-3 "
-                                            />
-                                        </td>
-                                    </tr>
+                                                    min="0"
+                                                    max="100"
+                                                    value={s.obtained}
+                                                    onChange={(e) => {
+                                                        handleScoreChange(idx, e.target.value);
+                                                        if (validationErrors[`subject${idx + 1}`]) {
+                                                            setValidationErrors(prev => {
+                                                                const newErrors = { ...prev };
+                                                                delete newErrors[`subject${idx + 1}`];
+                                                                return newErrors;
+                                                            });
+                                                        }
+                                                    }}
+                                                    placeholder={idx < 3 ? "Enter Marks" : "Enter Marks"}
+                                                    className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 p-3"
+                                                />
+                                            </td>
+                                        </tr>
+                                        {(validationErrors[`subject${idx + 1}`] || validationErrors[`subject${idx + 1}Name`]) && (
+                                            <tr>
+                                                <td colSpan="3" className="px-3 pb-3 border-0">
+                                                    {validationErrors[`subject${idx + 1}Name`] && <ValidationError fieldName={`subject${idx + 1}Name`} />}
+                                                    {validationErrors[`subject${idx + 1}`] && <ValidationError fieldName={`subject${idx + 1}`} />}
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
                                 ))}
                             </tbody>
                         </table>

@@ -76,11 +76,11 @@ const AcademicScores = ({ personalData, setPersonalInfoErrors }) => {
 
         const trimmedValue = typeof value === 'string' ? value.trim() : value;
 
-        if (!trimmedValue && name !== 'otherMedium') {
+        if (!trimmedValue && name !== 'otherMedium' && name !== 'registerNumber') {
             return 'This field is required';
         }
 
-        if (name === 'otherMedium' && !trimmedValue) {
+        if ((name === 'otherMedium' || name === 'registerNumber') && !trimmedValue) {
             return null;
         }
 
@@ -140,9 +140,7 @@ const AcademicScores = ({ personalData, setPersonalInfoErrors }) => {
         if (!schoolName || schoolName.trim() === '') {
             errors.schoolName = 'School Name is required';
         }
-        if (!registerNumber || registerNumber.trim() === '') {
-            errors.registerNumber = 'Register Number is required';
-        }
+        
         if (!mediumOfStudy) {
             errors.mediumOfStudy = 'Medium of Study is required';
         }
@@ -425,7 +423,7 @@ const AcademicScores = ({ personalData, setPersonalInfoErrors }) => {
                             <ValidationError fieldName="schoolName" />
                         </div>
                         <div>
-                            <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">Register Number <span className="text-red-600">*</span></label>
+                            <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">Register Number </label>
                             <input
                                 type="text"
                                 name="registerNumber"
