@@ -57,12 +57,6 @@ export default function Dashboard() {
       .then(data => {
         // Ensure data is an array, not an error object
         if (Array.isArray(data)) {
-          if (data.length > 0) {
-            // Debug: Log first few dates to see actual format from server
-            data.slice(0, 3).forEach((app, i) => {
-              console.log(`  Record ${i + 1}: ${app.date || app.applicationDate}`);
-            });
-          }
           // Reverse to show latest submissions first (stack/LIFO method)
           setApplications(data.reverse());
 

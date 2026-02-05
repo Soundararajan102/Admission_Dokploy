@@ -420,7 +420,15 @@ export default function PDFPreviewModal({
 
       // Family Details
       setTextField('father/guardian-name', studentData.fatherName || '');
-      setTextField('father/guardian-occupation', studentData.fatherOccupation || '');
+      
+      // Set father occupation with font size adjustment for "CENTRAL GOVT. EMP."
+      const fatherOccupationValue = studentData.fatherOccupation || '';
+      if (fatherOccupationValue === 'CENTRAL GOVT. EMP.') {
+        setTextField('father/guardian-occupation', fatherOccupationValue, { fontSize: 10 });
+      } else {
+        setTextField('father/guardian-occupation', fatherOccupationValue);
+      }
+      
       setTextField('family-income', studentData.annualIncome || '');
       
       // Set caste field with dynamic font size

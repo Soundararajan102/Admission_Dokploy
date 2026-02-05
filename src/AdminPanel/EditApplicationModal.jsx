@@ -1630,18 +1630,15 @@ export default function EditApplicationModal({
             }
           }
 
-          if (!foundMatch) {
-            console.warn(`⚠ Export value '${exportValue}' not found in ${fieldName}`);
-          }
+          
           return foundMatch;
         } catch (error) {
-          console.warn(`✗ Could not set ${fieldName}:`, error.message);
           return false;
         }
       };
 
       // Helper function to safely set text field value
-      const setTextField = (fieldName, value) => {
+      const setTextField = (fieldName, value, options = {}) => {
         try {
           const actualName = resolveFieldName(fieldName);
           if (!actualName) return;
@@ -1649,6 +1646,11 @@ export default function EditApplicationModal({
           const field = form.getTextField(actualName);
           if (field && value !== undefined && value !== null && value !== '') {
             field.setText(String(value));
+            
+            // Apply font size if specified
+            if (options.fontSize !== undefined) {
+              field.setFontSize(options.fontSize);
+            }
           }
         } catch (error) {
           console.warn(`✗ Could not set text field '${fieldName}':`, error.message);
@@ -1744,7 +1746,15 @@ export default function EditApplicationModal({
 
       // Family Details
       setTextField('father/guardian-name', editData.fatherName || '');
-      setTextField('father/guardian-occupation', editData.fatherOccupation || '');
+      
+      // Set father occupation with font size adjustment for "CENTRAL GOVT. EMP."
+      const fatherOccupationValue = editData.fatherOccupation || '';
+      if (fatherOccupationValue === 'CENTRAL GOVT. EMP.') {
+        setTextField('father/guardian-occupation', fatherOccupationValue, { fontSize: 10 });
+      } else {
+        setTextField('father/guardian-occupation', fatherOccupationValue);
+      }
+      
       setTextField('family-income', editData.annualIncome || '');
       setTextField('caste', editData.caste || '');
 
