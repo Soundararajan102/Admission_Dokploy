@@ -2220,12 +2220,7 @@ export default function EditApplicationModal({
   };
 
   const handleSaveOnly = async () => {
-    // Validate all required fields first
-    if (!validateAllFields()) {
-      setIsSaving(false);
-      return;
-    }
-
+    // No validation - save whatever data is present
     setIsSaving(true);
     
     try {
