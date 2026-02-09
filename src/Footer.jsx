@@ -4,10 +4,10 @@ const openVishor = () => {
     window.open("https://vishor-portfolio.netlify.app/", "_blank", "noopener,noreferrer");
 };
 const openPradeep = () => {
-     window.open("", "_blank", "noopener,noreferrer");
+     window.open("https://pradeepkumark.netlify.app/", "_blank", "noopener,noreferrer");
 };
 const openSoundar = () => {
-     window.open("", "_blank", "noopener,noreferrer");
+     window.open("https://soundararajant.netlify.app/", "_blank", "noopener,noreferrer");
 };
 const openSachinn = () => {
      window.open("https://sachinnp.netlify.app/", "_blank", "noopener,noreferrer");
@@ -16,22 +16,23 @@ const openSachinn = () => {
 
 const Footer = () => {
     return (
-        <footer className="bg-gradient-to-br from-slate-900 via-slate-950 to-black text-slate-100 border-t border-slate-800 sticky bottom-0 w-full">
+        <footer className="bg-white text-gray-800 border-t border-gray-200 sticky bottom-0 w-full shadow-sm">
             <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-xs text-slate-400 text-center sm:text-left">
-                        (2022-2026) batch — KNCET Admissions
-                    </p>
-                    <nav className="flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm text-slate-300" aria-label="Developer navigation">
-                        <span className="font-semibold text-slate-100">Developed by</span>
-                        <button type="button" onClick={openSachinn} className="hover:text-emerald-300 transition cursor-pointer">Sachinn P</button>
-                        <span aria-hidden className="text-slate-600">•</span>
-                        <button type="button" onClick={openSoundar} className="hover:text-emerald-300 transition cursor-pointer">Soundarajan S</button>
-                        <span aria-hidden className="text-slate-600">•</span>
-                        <button type="button" onClick={openPradeep} className="hover:text-emerald-300 transition cursor-pointer">Pradeepkumar R</button>
-                        <span aria-hidden className="text-slate-600">•</span>
-                        <button type="button" onClick={openVishor} className="hover:text-emerald-300 transition cursor-pointer">Vishor G</button>
-                    </nav>
+
+                <div className="flex flex-wrap items-center justify-center gap-3 text-xs sm:text-sm text-gray-600">
+                    {/* builder */}
+                    <span className="font-semibold text-gray-800">Developed by</span>
+                    <button type="button" onClick={openPradeep} className="hover:text-blue-600 transition cursor-pointer">Pradeepkumar K</button>
+                    <span aria-hidden className="text-gray-400">•</span>
+                    <button type="button" onClick={openSachinn} className="hover:text-blue-600 transition cursor-pointer">Sachinn P</button>
+                    <span aria-hidden className="text-gray-400">•</span>
+                    <button type="button" onClick={openSoundar} className="hover:text-blue-600 transition cursor-pointer">Soundararajan T</button>
+                    <span aria-hidden className="text-gray-400">•</span>
+                    <button type="button" onClick={openVishor} className="hover:text-blue-600 transition cursor-pointer">Vishor G</button>
+                    
+                    {/* batch */}
+                    <span aria-hidden className="text-gray-900">|</span>
+                    <span className="text-gray-500">CSE - Batch 2022-2026</span>
                 </div>
             </div>
         </footer>

@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Nav from "../Nav";
 import PDFPreviewModal from '../AdminPanel/PDFPreviewModal';
+import Footer from "../Footer";
 
 const FeesSuccess = () => {
   const navigate = useNavigate();
@@ -65,6 +66,7 @@ const FeesSuccess = () => {
         scoresData={scoresData}
         studentName={applicationData.fullName}
       />
+      <Footer />
     </>
   );
 };

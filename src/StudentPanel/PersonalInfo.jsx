@@ -9,6 +9,7 @@ import AcademicScores from "./AcadamicScore";
 import CBSEScore from "./CBSEScore";
 import DiplomaScores from "./DiplomaScores";
 import VocationalScores from "./Vocational";
+import Footer from "../Footer";
 
 const PersonalInfo = () => {
 
@@ -1010,7 +1011,7 @@ const Address = [
           <h2 className="text-base sm:text-lg  text-gray-600 mb-6 tracking-wide font-bold">Autonomous</h2>
           <div className="max-w-2xl mx-auto border-t border-gray-200 pt-6 px-4">
             <p className="text-xs sm:text-sm text-gray-600 leading-relaxed mb-2">
-              AICTE-New Delhi, Affiliation: Anna University, Chennai, Accreditations: NAAC & NBA
+              AICTE-New Delhi, Affiliation: Anna University, Chennai, Accreditation: NAAC & NBA
             </p>
             <p className="text-xs text-gray-500">Namakkal - Trichy Main Road, Thottiapatti (Po), Thottiam Taluk, Trichy Dt. 621 215</p>
           </div>
@@ -1882,6 +1883,7 @@ const Address = [
           &copy; 2024 Kongunadu College of Engineering and Technology. All Rights Reserved.
         </footer> */}
       </main>
+      <Footer />
     </div>
   );
 };

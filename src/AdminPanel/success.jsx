@@ -2,6 +2,7 @@ import React from "react";
 const Logo = "/assets/kongunadulogo.png";
 import { useLocation, useNavigate } from "react-router-dom";
 import Nav from "../Nav";
+import Footer from "../Footer";
 
 const Sucess = () => {
     const location = useLocation();
@@ -37,6 +38,7 @@ const Sucess = () => {
                 </div>
 
             </div>
+            <Footer />
         </>
     )
 }

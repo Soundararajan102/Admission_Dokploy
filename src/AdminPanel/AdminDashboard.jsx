@@ -5,6 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 
 import Nav from "../Nav";
 import EditApplicationModal from "./EditApplicationModal";
+import Footer from "../Footer";
 
 const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_ADMIN_URL;
 
@@ -550,6 +551,8 @@ export default function Dashboard() {
         applicationData={currentApp}
         onUpdateSuccess={handleUpdateSuccess}
       />
+      
+      <Footer />
     </div>
   );
 }

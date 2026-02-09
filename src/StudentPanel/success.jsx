@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import Nav from "../Nav";
+import Footer from "../Footer";
 
 const Sucess = () => {
     const location = useLocation();
@@ -294,6 +295,7 @@ const Sucess = () => {
                     </div>
                 </main>
             </div>
+            <Footer />
         </>
     )
 }
