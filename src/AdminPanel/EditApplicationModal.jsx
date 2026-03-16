@@ -1750,7 +1750,7 @@ export default function EditApplicationModal({
       // Set father occupation with font size adjustment for "CENTRAL GOVT. EMP."
       const fatherOccupationValue = editData.fatherOccupation || '';
       if (fatherOccupationValue === 'CENTRAL GOVT. EMP.') {
-        setTextField('father/guardian-occupation', fatherOccupationValue, { fontSize: 10 });
+        setTextField('father/guardian-occupation', fatherOccupationValue, { fontSize: 9 });
       } else {
         setTextField('father/guardian-occupation', fatherOccupationValue);
       }

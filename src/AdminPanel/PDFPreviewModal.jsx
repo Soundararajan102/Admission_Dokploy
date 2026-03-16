@@ -529,7 +529,12 @@ export default function PDFPreviewModal({
         setTextField('bus-stop-room-type', 'Room Type');
       } else {
         // Day scholar - use bus stop name
-        setTextField('bus-stop', studentData.busStopName || '');
+        const busStopNameValue = studentData.busStopName || '';
+        if (busStopNameValue.length < 20) {
+          setTextField('bus-stop', busStopNameValue, { fontSize: 12 });
+        } else {
+          setTextField('bus-stop', busStopNameValue);
+        }
         setTextField('bus-stop-room-type', 'Bus Stop');
       }
       
@@ -566,14 +571,14 @@ export default function PDFPreviewModal({
       setTextField('register-no', academicRegisterNo);
       
       // Type studies - if length < 5, use fontSize 12; otherwise pass original data without fontSize
-      if (academicCourseType && academicCourseType.length < 5) {
+      if (academicCourseType && academicCourseType.length < 6) {
         setTextField('type-studies', academicCourseType, { fontSize: 12 });
       } else {
         setTextField('type-studies', academicCourseType);
       }
       
       // Medium of study - if length < 6, use fontSize 12; otherwise pass original data without fontSize
-      if (academicMedium && academicMedium.length < 5) {
+      if (academicMedium && academicMedium.length < 6) {
         setTextField('medium-of-study', academicMedium, { fontSize: 12 });
       } else {
         setTextField('medium-of-study', academicMedium);

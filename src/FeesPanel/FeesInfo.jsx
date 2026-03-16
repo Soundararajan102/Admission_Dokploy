@@ -194,13 +194,6 @@ const FeeStructure = () => {
         feeOverallTotal: totals.overallTotal,
       };
 
-      
-        enquiryId: dataToSave.enquiryId,
-        status: dataToSave.status,
-        tuitionFee: dataToSave.tuitionFee,
-        totalFees: dataToSave.feeOverallTotal
-      });
-
       // Save to backend via GET method with query parameters (avoids CORS preflight)
       const params = new URLSearchParams();
       
