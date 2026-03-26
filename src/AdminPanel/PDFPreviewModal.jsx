@@ -438,7 +438,7 @@ export default function PDFPreviewModal({
         : ((studentData.caste === 'NOT REQUIRED' || studentData.community === 'OC') ? '-' : casteRawValue);
       
       // If length < 18, use fontSize 12; otherwise pass original data without fontSize
-      if (casteValue.length < 18) {
+      if (casteValue.length < 19) {
         setTextField('caste', casteValue, { fontSize: 12 });
       } else {
         setTextField('caste', casteValue);
@@ -525,7 +525,11 @@ export default function PDFPreviewModal({
           roomTypeText = roomType;
         }
       
-        setTextField('bus-stop', roomTypeText);
+        if (roomTypeText.length < 12) {
+          setTextField('bus-stop', roomTypeText, { fontSize: 12 });
+        } else {
+          setTextField('bus-stop', roomTypeText);
+        }
         setTextField('bus-stop-room-type', 'Room Type');
       } else {
         // Day scholar - use bus stop name

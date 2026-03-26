@@ -232,6 +232,7 @@ export default function EditApplicationModal({
     "STUDENTS-B.Ed",
     "CONSULTANT",
     "ADVERTISEMENT",
+    "CST",
     "OTHERS"
   ];
 
