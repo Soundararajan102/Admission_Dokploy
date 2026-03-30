@@ -418,7 +418,7 @@ export default function Dashboard() {
                     <th className="px-6 py-4">Student Details</th>
                     <th className="px-6 py-4">Enquiry ID</th>
                     <th className="px-6 py-4">Admission ID</th>
-                    <th className="px-6 py-4">1st Preference</th>
+                    <th className="px-6 py-4">Department</th>
                     <th className="px-6 py-4">Quota</th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4">Submitted</th>
@@ -439,12 +439,12 @@ export default function Dashboard() {
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100">
+                        <span className="font-mono text-xm font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100">
                           {app.enquiryId || "N/A"}
                         </span>
                       </td>
                       <td className="px-5 py-5">
-                        <span className="font-mono text-xs font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-md border border-green-100">
+                        <span className="font-mono text-xm font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-md border border-green-100">
                           {app.admissionId || "N/A"}
                         </span>
                       </td>
