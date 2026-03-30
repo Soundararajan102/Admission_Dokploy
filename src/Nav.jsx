@@ -9,7 +9,7 @@ const Nav=()=>{
                                 <img src={Logo} alt="KNCET Logo" className="h-12 w-auto" />
                                 <h1 className="text-lg sm:text-xl font-bold text-gray-800 tracking-tight text-center">
                                     Kongunadu College of Engineering and Technology
-                                </h1>
+                                </h1>                
                             </div>
                         </nav>
         </>

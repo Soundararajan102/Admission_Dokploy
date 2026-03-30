@@ -232,6 +232,7 @@ export default function Dashboard() {
           <h1 className="text-xl font-bold text-gray-800 tracking-tight">
             Kongunadu College of Engineering and Technology
           </h1>
+          
         </div>
       </nav> */}
 
@@ -418,6 +419,7 @@ export default function Dashboard() {
                     <th className="px-6 py-4">Enquiry ID</th>
                     <th className="px-6 py-4">Admission ID</th>
                     <th className="px-6 py-4">1st Preference</th>
+                    <th className="px-6 py-4">Quota</th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4">Submitted</th>
                     <th className="px-6 py-4 text-center">Actions</th>
@@ -426,7 +428,7 @@ export default function Dashboard() {
                 <tbody className="divide-y divide-gray-100 bg-white">
                   {currentEntries.map((app, idx) => (
                     <tr key={(app.enquiryId || app.email) + '-' + idx} className="hover:bg-blue-50/30 transition-colors group">
-                      <td className="px-6 py-5">
+                      <td className="px-5 py-5">
                         <div className="flex items-center">
                           {/* <div className="h-10 w-10 flex-shrink-0 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">
                             {(app.fullName && app.fullName.charAt(0)) || "?"}
@@ -441,13 +443,18 @@ export default function Dashboard() {
                           {app.enquiryId || "N/A"}
                         </span>
                       </td>
-                      <td className="px-6 py-5">
+                      <td className="px-5 py-5">
                         <span className="font-mono text-xs font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-md border border-green-100">
                           {app.admissionId || "N/A"}
                         </span>
                       </td>
-                      <td className="px-6 py-5">
-                        <div className="text-sm font-medium text-gray-700">{app.firstPreference || app.preference1 || app.department || "N/A"}</div>
+                      <td className="px-11 py-5">
+                        <div className="text-xm font-medium px-2.0 py-1">{app.firstPreference || app.preference1 || app.department || "N/A"}</div>
+                      </td>
+                      <td className="px-9 py-5">
+                        <span className="text-xm font-medium px-2.0 py-1">
+                          {(app.quota === 'MQ' || app.quota === 'Management') ? 'MQ' : (app.quota === 'GQ' || app.quota === 'Government') ? 'GQ' : 'N/A'}
+                        </span>
                       </td>
                       <td className="px-6 py-5">
                         <span className={`flex items-center text-xs font-bold ${app.status === "Admitted" ? "text-green-600 bg-green-50 border-green-100" :
