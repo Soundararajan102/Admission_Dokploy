@@ -571,6 +571,12 @@ const AcademicScores = ({ personalData, setPersonalInfoErrors }) => {
                                 type="number"
                                 value={totalMarks}
                                 readOnly
+                                onKeyDown={(e) => {
+                                  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                                    e.preventDefault();
+                                  }
+                                }}
+                                onWheel={(e) => e.target.blur()}
                                 className="w-full border-gray-300 bg-gray-100 p-3"
                             />
                         </div>
@@ -582,6 +588,12 @@ const AcademicScores = ({ personalData, setPersonalInfoErrors }) => {
                                 type="number"
                                 value={percentage}
                                 readOnly
+                                onKeyDown={(e) => {
+                                  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                                    e.preventDefault();
+                                  }
+                                }}
+                                onWheel={(e) => e.target.blur()}
                                 className="w-full border-gray-300 bg-gray-100 p-3"
                             />
                         </div>
@@ -593,6 +605,12 @@ const AcademicScores = ({ personalData, setPersonalInfoErrors }) => {
                                 type="number"
                                 value={cutoff} // Corrected: Now displays calculated value
                                 readOnly
+                                onKeyDown={(e) => {
+                                  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                                    e.preventDefault();
+                                  }
+                                }}
+                                onWheel={(e) => e.target.blur()}
                                 className="w-full border-gray-300 bg-gray-100 p-3 font-bold text-blue-600"
                             />
                         </div>
@@ -604,6 +622,12 @@ const AcademicScores = ({ personalData, setPersonalInfoErrors }) => {
                                 type="number"
                                 value={eligibility}
                                 readOnly
+                                onKeyDown={(e) => {
+                                  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                                    e.preventDefault();
+                                  }
+                                }}
+                                onWheel={(e) => e.target.blur()}
                                 // className={`w-full border-gray-300 bg-gray-100 p-3 font-bold ${eligibility.includes('Eligible') && !eligibility.includes('Not') ? 'text-green-600' : 'text-red-600'}`}
                                 className="w-full border-gray-300 bg-gray-100 p-3 font-bold text-blue-600"
                             />

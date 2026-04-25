@@ -670,6 +670,12 @@ const VocationalScores = ({ personalData, setPersonalInfoErrors }) => {
                                 type="number"
                                 value={totalMarks}
                                 readOnly
+                                onKeyDown={(e) => {
+                                  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                                    e.preventDefault();
+                                  }
+                                }}
+                                onWheel={(e) => e.target.blur()}
                                 className="w-full border-gray-300 bg-gray-100 p-3"
                             />
                         </div>
@@ -683,6 +689,12 @@ const VocationalScores = ({ personalData, setPersonalInfoErrors }) => {
                                 type="number"
                                 value={percentage}
                                 readOnly
+                                onKeyDown={(e) => {
+                                  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                                    e.preventDefault();
+                                  }
+                                }}
+                                onWheel={(e) => e.target.blur()}
                                 className="w-full border-gray-300 bg-gray-100 p-3"
                             />
                         </div>
@@ -696,6 +708,12 @@ const VocationalScores = ({ personalData, setPersonalInfoErrors }) => {
                                 type="number"
                                 value={cutoff}
                                 readOnly
+                                onKeyDown={(e) => {
+                                  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                                    e.preventDefault();
+                                  }
+                                }}
+                                onWheel={(e) => e.target.blur()}
                                 className="w-full border-gray-300 bg-gray-100 p-3 font-bold text-blue-600"
                             />
                         </div>
@@ -709,6 +727,12 @@ const VocationalScores = ({ personalData, setPersonalInfoErrors }) => {
                                 type="number"
                                 value={eligibility}
                                 readOnly
+                                onKeyDown={(e) => {
+                                  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                                    e.preventDefault();
+                                  }
+                                }}
+                                onWheel={(e) => e.target.blur()}
                                 className="w-full border-gray-300 bg-gray-100 p-3 font-bold text-blue-600"
                             />
                         </div>

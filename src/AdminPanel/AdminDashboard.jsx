@@ -5,6 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 
 import Nav from "../Nav";
 import EditApplicationModal from "./EditApplicationModal";
+import BusFeeModal from "./BusFeeModal";
 import Footer from "../Footer";
 
 const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_ADMIN_URL;
@@ -45,6 +46,7 @@ export default function Dashboard() {
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [showDeptFilter, setShowDeptFilter] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBusFeeModalOpen, setIsBusFeeModalOpen] = useState(false);
   const [currentApp, setCurrentApp] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
@@ -349,6 +351,15 @@ export default function Dashboard() {
               </div>
 
               <div className="flex items-center space-x-3 text-sm text-gray-500">
+                {/* Bus Fee Button */}
+                <button
+                  onClick={() => setIsBusFeeModalOpen(true)}
+                  className="flex items-center space-x-4 px-6 py-2 rounded-lg bg-blue-700 hover:bg-blue-700 text-white font-medium shadow-sm border border-white-700 transition-colors"
+                  style={{ marginRight: '0.5rem' }}
+                >
+                  
+                  <span>Bus Fee</span>
+                </button>
                 {/* Department Filter Dropdown */}
                 <div className="relative">
                   <button 
@@ -549,6 +560,11 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+      {/* Bus Fee Modal */}
+      {isBusFeeModalOpen && (
+        <div className="fixed inset-0 z-40 bg-gray-900 opacity-50 pointer-events-none"></div>
+      )}
+      <BusFeeModal isOpen={isBusFeeModalOpen} onClose={() => setIsBusFeeModalOpen(false)} />
       </main>
 
       {/* Edit Application Modal */}

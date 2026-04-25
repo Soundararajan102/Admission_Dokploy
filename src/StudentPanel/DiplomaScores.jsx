@@ -455,6 +455,12 @@ const DiplomaScores = ({ personalData, setPersonalInfoErrors }) => {
                     });
                   }
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                  }
+                }}
+                onWheel={(e) => e.target.blur()}
                 className="w-full px-4 py-2.5 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-400"
                 placeholder="Enter Your Up 1st To 5th Semester Marks"
               />
@@ -474,6 +480,12 @@ const DiplomaScores = ({ personalData, setPersonalInfoErrors }) => {
                 max="100"
                 value={sixthSemMarks}
                 onChange={(e) => handleSemesterMarkChange(e.target.value, setSixthSemMarks)}
+                onKeyDown={(e) => {
+                  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                  }
+                }}
+                onWheel={(e) => e.target.blur()}
                 className="w-full px-4 py-2.5 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none hover:border-gray-400"
                 placeholder="Enter Your Up 1st To 6th Semester Marks"
               />

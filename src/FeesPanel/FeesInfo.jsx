@@ -301,6 +301,12 @@ const FeeStructure = () => {
                       min="0"
                       value={formData[item.name]}
                       onChange={handleInputChange}
+                      onKeyDown={(e) => {
+                        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                          e.preventDefault();
+                        }
+                      }}
+                      onWheel={(e) => e.target.blur()}
                       className="w-full p-1 border rounded text-center"
                       placeholder="0"
                     />
@@ -319,13 +325,13 @@ const FeeStructure = () => {
               <tr className={formData.scStScholarship && Number(formData.scStScholarship) > 0 ? "bg-pink-50" : "bg-green-50"}>
                 <td className="p-3 border">SC / ST Scholarship (Income &lt; 2.5L)</td>
                 <td className="p-3 border">
-                  <input type="number" name="scStScholarship" min="0" value={formData.scStScholarship} onChange={handleInputChange} className="w-full p-1 border rounded text-center" placeholder="0" />
+                  <input type="number" name="scStScholarship" min="0" value={formData.scStScholarship} onChange={handleInputChange} onKeyDown={(e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); } }} onWheel={(e) => e.target.blur()} className="w-full p-1 border rounded text-center" placeholder="0" />
                 </td>
               </tr>
               <tr className={formData.fgScholarship && Number(formData.fgScholarship) > 0 ? "bg-pink-50" : "bg-green-50"}>
                 <td className="p-3 border">FG - First Graduate Scholarship</td>
                 <td className="p-3 border">
-                  <input type="number" name="fgScholarship" min="0" value={formData.fgScholarship} onChange={handleInputChange} className="w-full p-1 border rounded text-center" placeholder="0" />
+                  <input type="number" name="fgScholarship" min="0" value={formData.fgScholarship} onChange={handleInputChange} onKeyDown={(e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); } }} onWheel={(e) => e.target.blur()} className="w-full p-1 border rounded text-center" placeholder="0" />
                 </td>
               </tr>
               <tr className="bg-gray-800 text-white font-bold">
@@ -340,7 +346,7 @@ const FeeStructure = () => {
               <tr className={formData.busFee && Number(formData.busFee) > 0 ? "bg-pink-50" : "bg-green-50"}>
                 <td className="p-3 border font-semibold italic">Bus Fee (Per Year)</td>
                 <td className="p-3 border">
-                  <input type="number" name="busFee" min="0" value={formData.busFee} onChange={handleInputChange} className="w-full p-1 border rounded text-center" placeholder="0" />
+                  <input type="number" name="busFee" min="0" value={formData.busFee} onChange={handleInputChange} onKeyDown={(e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); } }} onWheel={(e) => e.target.blur()} className="w-full p-1 border rounded text-center" placeholder="0" />
                 </td>
               </tr>
 
@@ -356,7 +362,7 @@ const FeeStructure = () => {
                 <tr key={item.name} className="bg-green-50">
                   <td className="p-3 border">{item.label}</td>
                   <td className="p-3 border">
-                    <input type="number" name={item.name} min="0" value={formData[item.name]} onChange={handleInputChange} className="w-full p-1 border rounded text-center" placeholder="0" />
+                    <input type="number" name={item.name} min="0" value={formData[item.name]} onChange={handleInputChange} onKeyDown={(e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowDown') { e.preventDefault(); } }} onWheel={(e) => e.target.blur()} className="w-full p-1 border rounded text-center" placeholder="0" />
                   </td>
                 </tr>
               ))}

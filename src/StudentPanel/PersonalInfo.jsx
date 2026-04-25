@@ -1642,6 +1642,12 @@ const Address = [
                         handleChange(e);
                       }
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                        e.preventDefault();
+                      }
+                    }}
+                    onWheel={(e) => e.target.blur()}
                     onBlur={handleBlur}
                     maxLength={6}
                     className="w-full px-4 py-2.5 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all outline-none hover:border-gray-400"
@@ -1665,6 +1671,12 @@ const Address = [
                         handleChange(e);
                       }
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                        e.preventDefault();
+                      }
+                    }}
+                    onWheel={(e) => e.target.blur()}
                     onBlur={handleBlur}
                     maxLength={10}
                     className="w-full px-4 py-2.5 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all outline-none hover:border-gray-400"
@@ -1688,6 +1700,12 @@ const Address = [
                         handleChange(e);
                       }
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                        e.preventDefault();
+                      }
+                    }}
+                    onWheel={(e) => e.target.blur()}
                     onBlur={handleBlur}
                     maxLength={10}
                     className="w-full px-4 py-2.5 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all outline-none hover:border-gray-400"
@@ -1711,6 +1729,12 @@ const Address = [
                         handleChange(e);
                       }
                     }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                        e.preventDefault();
+                      }
+                    }}
+                    onWheel={(e) => e.target.blur()}
                     onBlur={handleBlur}
                     maxLength={10}
                     className="w-full px-4 py-2.5 text-sm bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all outline-none hover:border-gray-400"
@@ -1755,8 +1779,8 @@ const Address = [
                       }}
                       onBlur={handleBlur}
                       onKeyDown={(e) => {
-                        // Prevent decimal point, 'e', '+', '-' keys
-                        if (e.key === '.' || e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
+                        // Prevent decimal point, 'e', '+', '-', and arrow keys
+                        if (e.key === '.' || e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
                           e.preventDefault();
                         }
                       }}

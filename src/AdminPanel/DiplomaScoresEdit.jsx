@@ -181,6 +181,12 @@ export default function DiplomaScoresEdit({ applicationData, scoresData, onSave 
                             type="number"
                             value={diplomaData.completionYear}
                             onChange={(e) => handleInputChange('completionYear', e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                                e.preventDefault();
+                              }
+                            }}
+                            onWheel={(e) => e.target.blur()}
                             className="w-full px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                             placeholder="Enter Completion Year"
                         />
