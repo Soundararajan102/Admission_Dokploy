@@ -354,10 +354,8 @@ export default function Dashboard() {
                 {/* Bus Fee Button */}
                 <button
                   onClick={() => setIsBusFeeModalOpen(true)}
-                  className="flex items-center space-x-4 px-6 py-2 rounded-lg bg-blue-700 hover:bg-blue-700 text-white font-medium shadow-sm border border-white-700 transition-colors"
-                  style={{ marginRight: '0.5rem' }}
+                  className="flex items-center space-x-2 hover:text-blue-600 transition-colors px-4 py-2 rounded-lg hover:bg-blue-50 border border-gray-200 hover:border-blue-300 shadow-sm bg-white font-medium"
                 >
-                  
                   <span>Bus Fee</span>
                 </button>
                 {/* Department Filter Dropdown */}
