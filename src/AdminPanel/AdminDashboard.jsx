@@ -447,13 +447,13 @@ export default function Dashboard() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-5">
-                        <span className="font-mono text-xm font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100">
+                      <td className="px-8 py-5">
+                        <span className="font-mono text-xm font-bold text-gray-400 bg-gray-150 px-4 py-1 rounded-md border border-gray-200">
                           {app.enquiryId || "N/A"}
                         </span>
                       </td>
                       <td className="px-5 py-5">
-                        <span className="font-mono text-xm font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-md border border-green-100">
+                        <span className="font-mono text-xl font-bold text-green-700 bg-green-50 px-3 py-1.5 rounded-md border border-green-100">
                           {app.admissionId || "N/A"}
                         </span>
                       </td>
