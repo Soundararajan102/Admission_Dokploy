@@ -50,28 +50,33 @@ export default function Dashboard() {
   const [currentApp, setCurrentApp] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [loadingEditId, setLoadingEditId] = useState(null);
   const navigate = useNavigate();
   const { logout } = useAuth();
 
   // Fetch all applications
-  const fetchApplications = () => {
-    fetch(GOOGLE_SCRIPT_URL)
-      .then(res => res.json())
-      .then(data => {
-        // Ensure data is an array, not an error object
-        if (Array.isArray(data)) {
-          // Reverse to show latest submissions first (stack/LIFO method)
-          setApplications(data.reverse());
-
-        } else if (data && data.error) {
-          setApplications([]);
-        } else {
-          setApplications([]);
-        }
-      })
-      .catch(err => {
+  const fetchApplications = async () => {
+    try {
+      const res = await fetch(GOOGLE_SCRIPT_URL);
+      const data = await res.json();
+      
+      // Ensure data is an array, not an error object
+      if (Array.isArray(data)) {
+        // Reverse to show latest submissions first (stack/LIFO method)
+        const reversedData = data.reverse();
+        setApplications(reversedData);
+        return reversedData;
+      } else if (data && data.error) {
         setApplications([]);
-      });
+        return [];
+      } else {
+        setApplications([]);
+        return [];
+      }
+    } catch (err) {
+      setApplications([]);
+      return [];
+    }
   };
 
   useEffect(() => {
@@ -191,9 +196,21 @@ export default function Dashboard() {
     // Empty for now
   }
 
-  const handleEditClick = (app) => {
-    setCurrentApp(app);
+  const handleEditClick = async (app) => {
+    setLoadingEditId(app.enquiryId || app.email);
+    
+    // Fetch fresh data from Google Sheet
+    const freshData = await fetchApplications();
+    
+    // Find the updated application by enquiryId or email
+    const updatedApp = freshData.find(a => 
+      a.enquiryId === app.enquiryId || a.email === app.email
+    );
+    
+    // Set the updated app and open modal
+    setCurrentApp(updatedApp || app);
     setIsModalOpen(true);
+    setLoadingEditId(null);
   }
 
   const handleViewClick = (app) => {
@@ -487,10 +504,29 @@ export default function Dashboard() {
                       <td className="px-6 py-5 text-center">
                         <div className="flex items-center justify-center space-x-2 lg:opacity-0 group-hover:opacity-100 transition-opacity">
                           <button 
-                          className="flex items-center space-x-2 px-4 py-2 text-yellow-600 hover:bg-yellow-100 rounded-lg transition-colors border border-transparent hover:border-yellow-200"
-                            title="Edit" onClick={() => handleEditClick(app)} >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                            <span className="font-medium">Edit</span>
+                            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors border ${
+                              loadingEditId === (app.enquiryId || app.email)
+                                ? 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed opacity-60'
+                                : 'text-yellow-600 hover:bg-yellow-100 border border-transparent hover:border-yellow-200'
+                            }`}
+                            title={loadingEditId === (app.enquiryId || app.email) ? "Loading..." : "Edit"}
+                            onClick={() => handleEditClick(app)}
+                            disabled={loadingEditId === (app.enquiryId || app.email)}
+                          >
+                            {loadingEditId === (app.enquiryId || app.email) ? (
+                              <>
+                                <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span className="font-medium">Loading...</span>
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                <span className="font-medium">Edit</span>
+                              </>
+                            )}
                           </button>
                         </div>
                       </td>
