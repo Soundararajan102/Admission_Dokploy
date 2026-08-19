@@ -78,3 +78,53 @@ def health_check(response: Response, db: Session = Depends(get_db)):
         "database": db_status,
         "message": "Backend is running flawlessly" if db_status == "healthy" else "Database connection failed"
     }
+
+from fastapi import UploadFile, File
+import csv
+import io
+import uuid
+
+@app.post("/api/system/upload-csv/{table_name}", tags=["system"])
+async def upload_csv_data(table_name: str, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    if table_name not in ["student_records", "admitted_students"]:
+        raise HTTPException(status_code=400, detail="Invalid table name. Use 'student_records' or 'admitted_students'.")
+        
+    content = await file.read()
+    text_data = content.decode('utf-8')
+    reader = csv.DictReader(io.StringIO(text_data))
+    rows = list(reader)
+    
+    if not rows:
+        return {"message": "CSV is empty."}
+        
+    headers = [h for h in reader.fieldnames if h and h.strip()]
+    if 'id' not in headers:
+        headers.append('id')
+        
+    columns = ', '.join([f'"{h}"' for h in headers])
+    placeholders = ', '.join([':' + h.replace(' ', '_').lower() for h in headers])
+    
+    from sqlalchemy import text as sqla_text
+    query = sqla_text(f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders}) ON CONFLICT DO NOTHING")
+    
+    success_count = 0
+    for row in rows:
+        values = {}
+        for h in headers:
+            safe_key = h.replace(' ', '_').lower()
+            if h == 'id' and h not in row:
+                values[safe_key] = str(uuid.uuid4())
+            else:
+                val = row.get(h, None)
+                values[safe_key] = val if val != "" else None
+        
+        try:
+            db.execute(query, values)
+            success_count += 1
+        except Exception as e:
+            print(f"Error inserting row: {e}")
+            db.rollback()
+            continue
+            
+    db.commit()
+    return {"message": f"Successfully inserted {success_count} rows into {table_name}!"}
