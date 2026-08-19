@@ -4,6 +4,7 @@ class Settings(BaseSettings):
     POSTGRES_URL: str
     SECRET_KEY: str
     FRONTEND_URL: str
+    SHEETS_API_KEY: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

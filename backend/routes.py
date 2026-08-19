@@ -11,6 +11,22 @@ router = APIRouter(prefix="/api/applications", tags=["applications"])
 
 from sqlalchemy.exc import IntegrityError
 import time
+from config import settings
+
+@router.get("/export/{table_name}")
+def export_table(table_name: str, api_key: str = "", db: Session = Depends(get_db)):
+    if not settings.SHEETS_API_KEY or api_key != settings.SHEETS_API_KEY:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+        
+    if table_name == "student_records":
+        records = db.query(models.StudentRecord).all()
+    elif table_name == "admitted_students":
+        records = db.query(models.AdmittedStudent).all()
+    else:
+        raise HTTPException(status_code=400, detail="Invalid table name")
+        
+    return [r.__dict__ for r in records if not r.__dict__.pop('_sa_instance_state', None)]
+
 
 @router.post("", response_model=schemas.StudentRecordResponse)
 def create_application(app_in: schemas.StudentRecordCreate, db: Session = Depends(get_db)):
