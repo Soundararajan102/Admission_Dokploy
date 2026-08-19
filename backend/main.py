@@ -9,7 +9,7 @@ from database import engine, get_db
 
 models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="KNCET Admission API")
+app = FastAPI(title="KNCET Admission API", docs_url=None, redoc_url=None)
 
 from config import settings
 
@@ -85,7 +85,7 @@ import io
 import uuid
 
 @app.post("/api/system/upload-csv/{table_name}", tags=["system"])
-async def upload_csv_data(table_name: str, file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def upload_csv_data(table_name: str, file: UploadFile = File(...), db: Session = Depends(get_db), current_user: models.AdminUser = Depends(auth.get_current_user)):
     if table_name not in ["student_records", "admitted_students"]:
         raise HTTPException(status_code=400, detail="Invalid table name. Use 'student_records' or 'admitted_students'.")
         
