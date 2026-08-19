@@ -25,11 +25,19 @@ def export_table(table_name: str, api_key: str = "", db: Session = Depends(get_d
     else:
         raise HTTPException(status_code=400, detail="Invalid table name")
         
+    if table_name == "student_records":
+        model = models.StudentRecord
+    else:
+        model = models.AdmittedStudent
+        
+    column_names = [col.name for col in model.__table__.columns]
+    
     results = []
     for r in records:
-        data = r.__dict__.copy()
-        data.pop('_sa_instance_state', None)
+        # Create a dict exactly in the order of the model's columns
+        data = {col: getattr(r, col) for col in column_names}
         results.append(data)
+        
     return results
 
 
