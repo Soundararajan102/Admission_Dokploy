@@ -32,10 +32,35 @@ def export_table(table_name: str, api_key: str = "", db: Session = Depends(get_d
         
     column_names = [col.name for col in model.__table__.columns]
     
+    desired_order = [
+        "enquiryId", "admissionId", "fullName", "initial", "dob", "gender", 
+        "studentContact", "community", "caste", "fatherName", "fatherOccupation", 
+        "fatherContact", "motherName", "motherOccupation", "motherContact", 
+        "annualIncome", "address1", "address2", "taluk", "district", "state", 
+        "pincode", "lastStudies", "sslcMarks", "schoolName", "govtSchool", 
+        "schoolType", "firstGrad", "courseType", "registerNumber", "medium", 
+        "yearOfPassing", "subject1", "subject1Marks", "subject2", "subject2Marks", 
+        "subject3", "subject3Marks", "subject4", "subject4Marks", "subject5", 
+        "subject5Marks", "subject6", "subject6Marks", "totalMarks", "percentage", 
+        "cutoff", "eligibility", "preference1", "preference2", "preference3", 
+        "preference4", "preference5", "preference6", "preference7", "preference8", 
+        "preference9", "quota", "entry", "accommodation", "roomType", "travelType", 
+        "busStopName", "busRoute", "busNo", "busFees", "consultingType", "knowAbout", 
+        "referencePrefix", "referenceName", "referenceContact", "dropoutCollege", 
+        "dropoutRegisterNo", "dropoutYear", "branchAwarded", "feesPaid", "status", 
+        "applicationDate", "date"
+    ]
+    
+    # Create final ordered list: desired first, then any remaining (like id)
+    ordered_columns = [col for col in desired_order if col in column_names]
+    for col in column_names:
+        if col not in ordered_columns:
+            ordered_columns.append(col)
+    
     results = []
     for r in records:
-        # Create a dict exactly in the order of the model's columns
-        data = {col: getattr(r, col) for col in column_names}
+        # Create a dict exactly in the ordered sequence
+        data = {col: getattr(r, col) for col in ordered_columns}
         results.append(data)
         
     return results
