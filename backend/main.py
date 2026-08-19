@@ -30,19 +30,6 @@ else:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-@app.on_event("startup")
-def create_initial_admin():
-    # Helper to create an initial admin if none exists (for dev purposes)
-    print("Initial admin user created or already exists")
-    db = next(get_db())
-    admin = db.query(models.AdminUser).first()
-    if not admin:
-        new_admin = models.AdminUser(
-            email="admin@kncet.com",
-            hashed_password=auth.get_password_hash("admin")
-        )
-        db.add(new_admin)
-        db.commit()
 
 @app.post("/api/login")
 def login(user_credentials: schemas.AdminUserLogin, db: Session = Depends(get_db)):
