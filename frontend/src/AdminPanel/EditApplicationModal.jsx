@@ -2390,24 +2390,6 @@ export default function EditApplicationModal({
     onClose();
   };
 
-  const handleNavigateToScores = () => {
-    const lastStudies = editData.lastStudies;
-
-    if (lastStudies === 'HSC') {
-      navigate('/admin/academic-score', { state: { applicationData: editData } });
-    } else if (lastStudies === 'VOCATIONAL') {
-      navigate('/admin/vocational-score', { state: { applicationData: editData } });
-    } else if (lastStudies === 'CBSE') {
-      navigate('/admin/cbse-score', { state: { applicationData: editData } });
-    } else if (lastStudies === 'DIPLOMA') {
-      navigate('/admin/diploma-score', { state: { applicationData: editData } });
-    } else if (lastStudies === 'Dropout') {
-      navigate('/feesInfo', { state: { applicationData: editData } });
-    }
-
-    setShowSuccessModal(false);
-    onClose();
-  };
 
   // Validation Error Display Component
   const ValidationError = ({ fieldName }) => {

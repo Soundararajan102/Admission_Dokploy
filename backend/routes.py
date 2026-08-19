@@ -160,7 +160,7 @@ def get_by_enquiry(enquiry_id: str, db: Session = Depends(get_db)):
     app = db.query(models.StudentRecord).filter(models.StudentRecord.enquiryId == enquiry_id).first()
     if not app:
         raise HTTPException(status_code=404, detail="Application not found")
-    return {"success": True, "data": app}
+    return app
 
 @router.put("/by-enquiry/{enquiry_id}")
 def update_by_enquiry(enquiry_id: str, app_update: dict, current_user: models.AdminUser = Depends(auth.get_current_user), db: Session = Depends(get_db)):
@@ -218,16 +218,11 @@ def update_by_enquiry(enquiry_id: str, app_update: dict, current_user: models.Ad
 
             db.commit()
             return {"success": True, "message": "Updated successfully", "admissionId": app.admissionId}
+        except HTTPException:
+            raise
         except Exception as e:
             db.rollback()
             if attempt == max_retries - 1:
                 raise HTTPException(status_code=500, detail="System busy. Could not generate unique Admission ID. Please try again.")
             time.sleep(0.1)
 
-@router.get("/by-enquiry/{enquiry_id}")
-def get_by_enquiry(enquiry_id: str, db: Session = Depends(get_db)):
-    app = db.query(models.StudentRecord).filter(models.StudentRecord.enquiryId == enquiry_id).first()
-    if not app:
-        raise HTTPException(status_code=404, detail="Application not found")
-        
-    return app

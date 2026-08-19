@@ -816,7 +816,7 @@ const Address = [
       const result = await response.json();
       
 
-      if (result.success && result.enquiryId) {
+      if (result.enquiryId) {
         localStorage.setItem('enquiryId', result.enquiryId);
         localStorage.setItem('studentName', combinedFullName);
         setIsLoading(false);

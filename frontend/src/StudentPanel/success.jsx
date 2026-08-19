@@ -27,10 +27,10 @@ const Sucess = () => {
             fetch(`${BACKEND_URL}/api/applications/by-enquiry/${encodeURIComponent(enquiryId)}`)
                 .then(res => res.json())
                 .then(data => {
-                    if (data.success && data.data) {
-                        setAdmissionId(data.data.admissionId || "");
-                        setStudentStatus(data.data.status || "");
-                        setStudentData(data.data);
+                    if (data && data.enquiryId) {
+                        setAdmissionId(data.admissionId || "");
+                        setStudentStatus(data.status || "");
+                        setStudentData(data);
                     }
                 })
                 .catch(error => console.error("Error fetching student data:", error));

@@ -3,7 +3,6 @@ import { Routes, Route } from 'react-router-dom'
 import './App.css'
 import PersonalInfo from './StudentPanel/PersonalInfo'
 import AcademicScores from './StudentPanel/AcadamicScore'
-import FeesSuccess from './FeesPanel/FeesSuccess'
 import VocationalScores from './StudentPanel/Vocational'
 import Sucess from './StudentPanel/success'
 import AdminSuccess from './AdminPanel/success'
@@ -24,13 +23,6 @@ function App() {
         <Route path='/HSCInfo' element={<AcademicScores/>} />
         <Route path='/VocationalInfo' element={<VocationalScores/>} />
         <Route path='/success' element={<Sucess/>} />
-
-        {/* Protected Fees Route */}
-        <Route path='/fees-success' element={
-          <ProtectedRoute>
-            <FeesSuccess />
-          </ProtectedRoute>
-        } />
 
         {/* Protected AdminPanel Routes */}
         <Route path='/admin' element={
