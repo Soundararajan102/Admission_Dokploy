@@ -19,9 +19,9 @@ def export_table(table_name: str, api_key: str = "", db: Session = Depends(get_d
         raise HTTPException(status_code=401, detail="Unauthorized")
         
     if table_name == "student_records":
-        records = db.query(models.StudentRecord).all()
+        records = db.query(models.StudentRecord).order_by(models.StudentRecord.enquiryId.asc()).all()
     elif table_name == "admitted_students":
-        records = db.query(models.AdmittedStudent).all()
+        records = db.query(models.AdmittedStudent).order_by(models.AdmittedStudent.enquiryId.asc()).all()
     else:
         raise HTTPException(status_code=400, detail="Invalid table name")
         
