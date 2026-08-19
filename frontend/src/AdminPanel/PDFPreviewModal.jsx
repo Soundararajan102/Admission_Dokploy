@@ -1001,7 +1001,7 @@ export default function PDFPreviewModal({
 
   // Generate a clean filename from admission ID and student name
   const generateFileName = () => {
-    const admissionId = (studentData.status === 'Admitted' && studentData.admissionId) ? studentData.admissionId : (studentData.enquiryId || 'N/A');
+    const admissionId = (studentData.status === 'Admitted' && studentData.admissionId) ? studentData.admissionId : 'N_A';
     const fullName = (studentData.fullName || 'Student').replace(/[^a-zA-Z0-9]/g, '_');
     return `${admissionId}_${fullName}.pdf`;
   };
