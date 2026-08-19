@@ -25,7 +25,12 @@ def export_table(table_name: str, api_key: str = "", db: Session = Depends(get_d
     else:
         raise HTTPException(status_code=400, detail="Invalid table name")
         
-    return [r.__dict__ for r in records if not r.__dict__.pop('_sa_instance_state', None)]
+    results = []
+    for r in records:
+        data = r.__dict__.copy()
+        data.pop('_sa_instance_state', None)
+        results.append(data)
+    return results
 
 
 @router.post("", response_model=schemas.StudentRecordResponse)
