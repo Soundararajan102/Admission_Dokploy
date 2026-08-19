@@ -13,14 +13,23 @@ app = FastAPI(title="KNCET Admission API")
 
 from config import settings
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL], # Secure production origin
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
+frontend_url = settings.FRONTEND_URL.rstrip('/')
+if frontend_url == "*":
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[frontend_url, f"{frontend_url}/"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 @app.on_event("startup")
 def create_initial_admin():
     # Helper to create an initial admin if none exists (for dev purposes)
