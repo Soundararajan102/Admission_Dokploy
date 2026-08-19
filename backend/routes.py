@@ -12,6 +12,58 @@ router = APIRouter(prefix="/api/applications", tags=["applications"])
 from sqlalchemy.exc import IntegrityError
 import time
 from config import settings
+import csv
+import io
+import uuid
+from fastapi import UploadFile, File
+
+@router.post("/import-csv-temp")
+async def import_csv_temp(
+    students_file: UploadFile = File(...),
+    admitted_file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    try:
+        # Read students
+        students_content = await students_file.read()
+        students_reader = csv.DictReader(io.StringIO(students_content.decode('utf-8')))
+        
+        student_records = []
+        for row in students_reader:
+            if not row.get('id'):
+                row['id'] = str(uuid.uuid4())
+            for k, v in row.items():
+                if v == "":
+                    row[k] = None
+            student_records.append(models.StudentRecord(**row))
+            
+        # Read admitted
+        admitted_content = await admitted_file.read()
+        admitted_reader = csv.DictReader(io.StringIO(admitted_content.decode('utf-8')))
+        
+        admitted_records = []
+        for row in admitted_reader:
+            if not row.get('id'):
+                row['id'] = str(uuid.uuid4())
+            for k, v in row.items():
+                if v == "":
+                    row[k] = None
+            admitted_records.append(models.AdmittedStudent(**row))
+            
+        # Wipe DB
+        db.query(models.StudentRecord).delete()
+        db.query(models.AdmittedStudent).delete()
+        
+        # Insert
+        db.bulk_save_objects(student_records)
+        db.bulk_save_objects(admitted_records)
+        
+        db.commit()
+        return {"success": True, "message": "Imported"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/export/{table_name}")
 def export_table(table_name: str, api_key: str = "", db: Session = Depends(get_db)):
