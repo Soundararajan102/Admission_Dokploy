@@ -203,8 +203,8 @@ def update_by_enquiry(enquiry_id: str, app_update: dict, current_user: models.Ad
                     db.add(new_admitted)
 
             db.commit()
-            return {"success": True, "message": "Updated successfully"}
-        except IntegrityError:
+            return {"success": True, "message": "Updated successfully", "admissionId": app.admissionId}
+        except Exception as e:
             db.rollback()
             if attempt == max_retries - 1:
                 raise HTTPException(status_code=500, detail="System busy. Could not generate unique Admission ID. Please try again.")
