@@ -43,3 +43,7 @@ Desktop.ini
 
 # Optional: ignore build artifacts
 build/
+
+.env
+backend/.env
+frontend/.env

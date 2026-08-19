@@ -8,7 +8,7 @@ import EditApplicationModal from "./EditApplicationModal";
 import BusFeeModal from "./BusFeeModal";
 import Footer from "../Footer";
 
-const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_ADMIN_URL;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
 // Convert date to DD-MM-YYYY format for display
 const formatDate = (dateString) => {
@@ -55,7 +55,7 @@ export default function Dashboard() {
 
   // Fetch all applications
   const fetchApplications = () => {
-    fetch(GOOGLE_SCRIPT_URL)
+    fetch(`${BACKEND_URL}/api/applications`)
       .then(res => res.json())
       .then(data => {
         // Ensure data is an array, not an error object

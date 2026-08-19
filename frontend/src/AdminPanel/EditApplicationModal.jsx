@@ -5,7 +5,7 @@ import PDFPreviewModal from './PDFPreviewModal';
 import DiplomaScoresEdit from './DiplomaScoresEdit';
 import Nav from "../Nav";
 
-const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_ADMIN_URL;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
 // Convert date to DD-MM-YYYY format for display
 const formatDate = (dateString) => {
@@ -500,17 +500,14 @@ export default function EditApplicationModal({
   // Fetch scores data from Google Sheet
   const fetchStudentScores = async (enquiryId) => {
     try {
-      const url = GOOGLE_SCRIPT_URL + "?action=getScoresData&enquiryId=" + encodeURIComponent(enquiryId);
+      const url = BACKEND_URL + "/api/applications/by-enquiry/" + encodeURIComponent(enquiryId);
       const response = await fetch(url);
       const responseData = await response.json();
       
       let rawScores = [];
 
-      if (responseData.success && Array.isArray(responseData.data)) {
-        rawScores = responseData.data;
-      } else if (Array.isArray(responseData)) {
-        // In case the response is directly an array
-        rawScores = responseData;
+      if (responseData && !responseData.detail) {
+        rawScores = [responseData];
       } else {
         setScoresData({});
         return;
@@ -2153,24 +2150,31 @@ export default function EditApplicationModal({
       // Convert all string values to uppercase before sending
       const uppercaseData = convertToUppercase(dataToSend);
       
-      // Log all fields being sent to backend for debugging
-      
-      for (const [key, value] of Object.entries(uppercaseData)) {
-        params.append(key, value);
+      // Step 2: Save scores if they were edited (only when data exists)
+      if (Object.keys(scoresData).length > 0) {
+        const uppercaseScoresData = convertToUppercase(scoresData);
+        // Merge scores into the main data
+        Object.assign(uppercaseData, uppercaseScoresData);
       }
       
-      const paramString = params.toString();
-
-      const response = await fetch(GOOGLE_SCRIPT_URL + "?" + params.toString());
+      const response = await fetch(`${BACKEND_URL}/api/applications/by-enquiry/${editData.enquiryId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(uppercaseData)
+      });
       const responseData = await response.json();
       
 
       // Check if the response indicates success
-      if (!responseData.success) {
-        console.error("Failed to update personal info: " + (responseData.message || "Unknown error"));
+      if (!response.ok) {
+        console.error("Failed to update personal info: " + (responseData.detail || "Unknown error"));
         setIsSaving(false);
         return;
       }
+      // For compatibility with old code expectation
+      responseData.success = true;
 
       // Update editData with server-returned admission ID (if generated)
       let updatedEditData = { ...editData };
@@ -2182,28 +2186,7 @@ export default function EditApplicationModal({
         }));
       }
 
-      // Step 2: Save scores if they were edited (only when data exists)
-      if (Object.keys(scoresData).length > 0) {
-        const scoreParams = new URLSearchParams();
-        scoreParams.append("action", "updateScores");
-        scoreParams.append("enquiryId", editData.enquiryId);
-        
-        // Convert scores data to uppercase before sending
-        const uppercaseScoresData = convertToUppercase(scoresData);
-        
-        // Add all score fields
-        for (const [key, value] of Object.entries(uppercaseScoresData)) {
-          scoreParams.append(key, value);
-        }
-        
-        const scoresResponse = await fetch(GOOGLE_SCRIPT_URL + "?" + scoreParams.toString());
-        const scoresResult = await scoresResponse.json();
-        
-        if (scoresResult.success) {
-        } else {
-          console.error("❌ Failed to save scores:", scoresResult.message);
-        }
-      }
+
 
       if (responseData.success) {
         onUpdateSuccess(updatedEditData);
@@ -2345,23 +2328,31 @@ export default function EditApplicationModal({
       // Convert all string values to uppercase before sending
       const uppercaseData = convertToUppercase(dataToSend);
       
-      // Log all fields being sent to backend for debugging
-      
-      for (const [key, value] of Object.entries(uppercaseData)) {
-        params.append(key, value);
+      // Step 2: Save scores if they were edited (only when data exists)
+      if (Object.keys(scoresData).length > 0) {
+        const uppercaseScoresData = convertToUppercase(scoresData);
+        // Merge scores into the main data
+        Object.assign(uppercaseData, uppercaseScoresData);
       }
       
-
-      const response = await fetch(GOOGLE_SCRIPT_URL + "?" + params.toString());
+      const response = await fetch(`${BACKEND_URL}/api/applications/by-enquiry/${editData.enquiryId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(uppercaseData)
+      });
       const responseData = await response.json();
       
 
       // Check if the response indicates success
-      if (!responseData.success) {
-        console.error("Failed to update personal info: " + (responseData.message || "Unknown error"));
+      if (!response.ok) {
+        console.error("Failed to update personal info: " + (responseData.detail || "Unknown error"));
         setIsSaving(false);
         return;
       }
+      // For compatibility with old code expectation
+      responseData.success = true;
 
       // Update editData with server-returned admission ID (if generated)
       let updatedEditData = { ...editData };
@@ -2373,28 +2364,6 @@ export default function EditApplicationModal({
         }));
       }
 
-      // Step 2: Save scores if they were edited (only when data exists)
-      if (Object.keys(scoresData).length > 0) {
-        const scoreParams = new URLSearchParams();
-        scoreParams.append("action", "updateScores");
-        scoreParams.append("enquiryId", editData.enquiryId);
-        
-        // Convert scores data to uppercase before sending
-        const uppercaseScoresData = convertToUppercase(scoresData);
-        
-        // Add all score fields
-        for (const [key, value] of Object.entries(uppercaseScoresData)) {
-          scoreParams.append(key, value);
-        }
-        
-        const scoresResponse = await fetch(GOOGLE_SCRIPT_URL + "?" + scoreParams.toString());
-        const scoresResult = await scoresResponse.json();
-        
-        if (!scoresResult.success) {
-      
-          console.error("❌ Failed to save scores:", scoresResult.message);
-        }
-      }
 
       if (responseData.success) {
         onUpdateSuccess(updatedEditData);

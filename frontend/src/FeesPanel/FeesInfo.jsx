@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Nav from "../Nav";
 import PDFPreviewModal from '../AdminPanel/PDFPreviewModal';
 
-const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_ADMIN_URL;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
 const FeeStructure = () => {
   const navigate = useNavigate();
@@ -55,23 +55,16 @@ const FeeStructure = () => {
       if (applicationData.enquiryId) {
         try {
           
-          const url = GOOGLE_SCRIPT_URL + "?action=getScoresData&enquiryId=" + encodeURIComponent(applicationData.enquiryId);
+          const url = BACKEND_URL + "/api/applications/by-enquiry/" + encodeURIComponent(applicationData.enquiryId);
           
           const response = await fetch(url);
           const responseData = await response.json();
           
-          
-          
-          let rawScores = [];
-          if (responseData.success && Array.isArray(responseData.data)) {
-            rawScores = responseData.data;
-          } else if (Array.isArray(responseData)) {
-            rawScores = responseData;
+          if (responseData && !responseData.detail) {
+            setScoresData(responseData);
+          } else {
+            setScoresData({});
           }
-
-          // Get the latest score (first item if sorted by date)
-          const scoresObject = rawScores.length > 0 ? rawScores[0] : {};
-          setScoresData(scoresObject);
           
         } catch (error) {
           
@@ -89,15 +82,13 @@ const FeeStructure = () => {
       if (applicationData.enquiryId) {
         try {
           
-          const url = GOOGLE_SCRIPT_URL + "?action=getFeeData&enquiryId=" + encodeURIComponent(applicationData.enquiryId);
+          const url = BACKEND_URL + "/api/applications/by-enquiry/" + encodeURIComponent(applicationData.enquiryId);
           
           const response = await fetch(url);
           const responseData = await response.json();
           
-          
-          
-          if (responseData.success && responseData.data) {
-            const feeRecord = responseData.data;
+          if (responseData && !responseData.detail) {
+            const feeRecord = responseData;
             
             // Populate form with existing fee data
             const updatedFormData = {
@@ -194,22 +185,18 @@ const FeeStructure = () => {
         feeOverallTotal: totals.overallTotal,
       };
 
-      // Save to backend via GET method with query parameters (avoids CORS preflight)
-      const params = new URLSearchParams();
-      
-      // Use same method as EditApplicationModal - send via GET with action parameter
-      for (const [key, value] of Object.entries(dataToSave)) {
-        params.append(key, value);
-      }
-
-      
-      const response = await fetch(GOOGLE_SCRIPT_URL + "?" + params.toString());
+      // Save to backend via PUT method with JSON body
+      const response = await fetch(`${BACKEND_URL}/api/applications/by-enquiry/${applicationData.enquiryId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToSave)
+      });
       
       const responseData = await response.json();
 
-      
-
-      if (responseData.success) {
+      if (response.ok) {
         // Update local applicationData with all changes
         Object.assign(applicationData, dataToSave);
         

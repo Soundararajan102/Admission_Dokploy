@@ -263,12 +263,14 @@ const AcademicScores = ({ personalData, setPersonalInfoErrors }) => {
       };
 
 
-      // Send to Google Apps Script
-      const params = new URLSearchParams(combinedData).toString();
-      const url = `${GOOGLE_SCRIPT_URL}?${params}`;
-
-      const response = await fetch(url, {
-        method: 'GET',
+      // Send to FastAPI Backend
+      const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${BACKEND_URL}/api/applications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(combinedData),
       });
 
       // Check if response is ok
@@ -276,17 +278,9 @@ const AcademicScores = ({ personalData, setPersonalInfoErrors }) => {
         throw new Error(`Server error: ${response.status} ${response.statusText}`);
       }
 
-      // Check content type before parsing JSON
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        console.error('Non-JSON response:', text);
-        throw new Error('Server returned non-JSON response. Please check your Google Apps Script URL.');
-      }
-
       const result = await response.json();
 
-      if (result.success && result.enquiryId) {
+      if (result.enquiryId) {
         // Save enquiry ID to localStorage
         localStorage.setItem('enquiryId', result.enquiryId);
         localStorage.setItem('studentName', combinedFullName);
