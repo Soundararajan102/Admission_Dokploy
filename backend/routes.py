@@ -11,6 +11,64 @@ router = APIRouter(prefix="/api/applications", tags=["applications"])
 
 from sqlalchemy.exc import IntegrityError
 import time
+import csv
+import io
+import uuid
+from fastapi import UploadFile, File
+
+@router.post("/import-csv-temp")
+async def import_csv_temp(
+    students_file: UploadFile = File(...),
+    admitted_file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    # Read files
+    students_content = await students_file.read()
+    admitted_content = await admitted_file.read()
+    
+    students_reader = csv.DictReader(io.StringIO(students_content.decode('utf-8')))
+    admitted_reader = csv.DictReader(io.StringIO(admitted_content.decode('utf-8')))
+    
+    # Clear tables
+    db.execute(models.StudentRecord.__table__.delete())
+    db.execute(models.AdmittedStudent.__table__.delete())
+    db.commit()
+    
+    # Insert students
+    student_records = []
+    seen_enquiries = set()
+    for row in students_reader:
+        if row.get('enquiryId') in seen_enquiries:
+            continue
+        seen_enquiries.add(row.get('enquiryId'))
+        
+        # Replace empty strings with None
+        clean_row = {k: (v if v != '' else None) for k, v in row.items()}
+        if 'id' not in clean_row or not clean_row['id']:
+            clean_row['id'] = str(uuid.uuid4())
+            
+        student_records.append(models.StudentRecord(**clean_row))
+        
+    db.bulk_save_objects(student_records)
+    
+    # Insert admitted
+    admitted_records = []
+    seen_admitted = set()
+    for row in admitted_reader:
+        if row.get('enquiryId') in seen_admitted:
+            continue
+        seen_admitted.add(row.get('enquiryId'))
+        
+        clean_row = {k: (v if v != '' else None) for k, v in row.items()}
+        if 'id' not in clean_row or not clean_row['id']:
+            clean_row['id'] = str(uuid.uuid4())
+            
+        admitted_records.append(models.AdmittedStudent(**clean_row))
+        
+    db.bulk_save_objects(admitted_records)
+    db.commit()
+    
+    return {"message": "Success", "students": len(student_records), "admitted": len(admitted_records)}
 
 @router.post("", response_model=schemas.StudentRecordResponse)
 def create_application(app_in: schemas.StudentRecordCreate, db: Session = Depends(get_db)):
@@ -84,7 +142,6 @@ def get_applications(
         query = query.filter(
             or_(
                 models.StudentRecord.fullName.ilike(search_term),
-                models.StudentRecord.email.ilike(search_term),
                 models.StudentRecord.enquiryId.ilike(search_term),
                 models.StudentRecord.admissionId.ilike(search_term),
                 models.StudentRecord.preference1.ilike(search_term)
