@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Nav from "../Nav";
 import PDFPreviewModal from '../AdminPanel/PDFPreviewModal';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 const FeeStructure = () => {
   const navigate = useNavigate();

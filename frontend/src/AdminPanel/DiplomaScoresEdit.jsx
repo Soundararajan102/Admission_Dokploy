@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_SCORES_URL;
+
 
 export default function DiplomaScoresEdit({ applicationData, scoresData, onSave }) {
     const [diplomaData, setDiplomaData] = useState({
@@ -86,17 +86,19 @@ export default function DiplomaScoresEdit({ applicationData, scoresData, onSave 
                 sixthSemMarks: diplomaData.sixthSemMarks
             };
 
-            const params = new URLSearchParams();
-            params.append("_method", "PUT");
-
-            for (const [key, value] of Object.entries(updatedData)) {
-                params.append(key, value);
-            }
-
-            const response = await fetch(GOOGLE_SCRIPT_URL + "?" + params.toString());
+            const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+            
+            const response = await fetch(`${BACKEND_URL}/api/applications/by-enquiry/${applicationData.enquiryId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+                },
+                body: JSON.stringify(updatedData)
+            });
             const responseData = await response.json();
 
-            if (response.ok && !responseData.error) {
+            if (response.ok && responseData.success) {
                 if (onSave) {
                     onSave(updatedData);
                 }

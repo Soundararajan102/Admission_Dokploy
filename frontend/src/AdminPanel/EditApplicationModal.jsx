@@ -5,7 +5,7 @@ import PDFPreviewModal from './PDFPreviewModal';
 import DiplomaScoresEdit from './DiplomaScoresEdit';
 import Nav from "../Nav";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 // Convert date to DD-MM-YYYY format for display
 const formatDate = (dateString) => {

@@ -13,7 +13,7 @@ const Sucess = () => {
     const [studentStatus, setStudentStatus] = React.useState("");
     const [studentData, setStudentData] = React.useState(null);
 
-    const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_SCORES_URL;
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
     React.useEffect(() => {
         setShowToast(true);
@@ -24,7 +24,7 @@ const Sucess = () => {
         // Fetch student data to get admission ID and status
         const enquiryId = location.state?.enquiryId;
         if (enquiryId) {
-            fetch(GOOGLE_SCRIPT_URL + "?action=getPersonalInfo&enquiryId=" + encodeURIComponent(enquiryId))
+            fetch(`${BACKEND_URL}/api/applications/by-enquiry/${encodeURIComponent(enquiryId)}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.success && data.data) {

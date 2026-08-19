@@ -24,7 +24,7 @@ const AcademicScores = ({ personalData, setPersonalInfoErrors }) => {
     const [validationErrors, setValidationErrors] = useState({});
 
     // Google Apps Script endpoint
-    const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_STUDENT_URL;
+
 
     // Degree list for conversion
     const degree = [
@@ -271,7 +271,7 @@ const AcademicScores = ({ personalData, setPersonalInfoErrors }) => {
 
 
             // Send to FastAPI Backend
-            const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+            const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
             const response = await fetch(`${BACKEND_URL}/api/applications`, {
                 method: 'POST',
                 headers: {

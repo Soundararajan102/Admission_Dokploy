@@ -155,6 +155,12 @@ def get_admitted_students(db: Session = Depends(get_db)):
 def update_application(app_id: str, app_in: schemas.ApplicationUpdate, db: Session = Depends(auth.get_current_user), db_session: Session = Depends(get_db)):
     # Wait, the Depends is wrong above, let's fix it manually inside or correctly inject
     pass
+@router.get("/by-enquiry/{enquiry_id}")
+def get_by_enquiry(enquiry_id: str, db: Session = Depends(get_db)):
+    app = db.query(models.StudentRecord).filter(models.StudentRecord.enquiryId == enquiry_id).first()
+    if not app:
+        raise HTTPException(status_code=404, detail="Application not found")
+    return {"success": True, "data": app}
 
 @router.put("/by-enquiry/{enquiry_id}")
 def update_by_enquiry(enquiry_id: str, app_update: dict, current_user: models.AdminUser = Depends(auth.get_current_user), db: Session = Depends(get_db)):
@@ -166,22 +172,30 @@ def update_by_enquiry(enquiry_id: str, app_update: dict, current_user: models.Ad
                 raise HTTPException(status_code=404, detail="Application not found")
                 
             # Generate admissionId if admitted and doesn't have one
+            generated_id = False
             if "status" in app_update and app_update["status"] == "Admitted" and not app.admissionId:
-                last_admitted = db.query(models.StudentRecord).filter(models.StudentRecord.admissionId != None).order_by(models.StudentRecord.admissionId.desc()).first()
+                last_admitted = db.query(models.StudentRecord).filter(models.StudentRecord.admissionId != None, models.StudentRecord.admissionId != "").order_by(models.StudentRecord.admissionId.desc()).first()
                 if last_admitted and last_admitted.admissionId.startswith("26KNF"):
                     try:
                         admitted_count = int(last_admitted.admissionId.replace("26KNF", ""))
                     except:
-                        admitted_count = db.query(models.StudentRecord).filter(models.StudentRecord.admissionId != None).count()
+                        admitted_count = db.query(models.StudentRecord).filter(models.StudentRecord.admissionId != None, models.StudentRecord.admissionId != "").count()
                 else:
-                    admitted_count = db.query(models.StudentRecord).filter(models.StudentRecord.admissionId != None).count()
+                    admitted_count = db.query(models.StudentRecord).filter(models.StudentRecord.admissionId != None, models.StudentRecord.admissionId != "").count()
                     
                 padded_count = str(admitted_count + 1).zfill(4)
                 app.admissionId = f"26KNF{padded_count}"
+                generated_id = True
 
             # Update fields dynamically
             for key, value in app_update.items():
                 if hasattr(app, key):
+                    # Prevent overwriting newly generated admissionId with empty string from frontend
+                    if key == "admissionId":
+                        if generated_id:
+                            continue
+                        if value == "" or value == "N/A":
+                            continue
                     setattr(app, key, value)
 
             # Handle AdmittedStudent table if status is Admitted

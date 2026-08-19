@@ -8,7 +8,7 @@ import EditApplicationModal from "./EditApplicationModal";
 import BusFeeModal from "./BusFeeModal";
 import Footer from "../Footer";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 // Convert date to DD-MM-YYYY format for display
 const formatDate = (dateString) => {

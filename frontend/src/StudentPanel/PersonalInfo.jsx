@@ -803,12 +803,16 @@ const Address = [
       };
 
 
-      // Google Apps Script endpoint
-      const GOOGLE_SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_STUDENT_URL;
-      const params = new URLSearchParams(dropoutSubmissionData).toString();
-      const url = `${GOOGLE_SCRIPT_URL}?${params}`;
+      // Submit to FastAPI Backend
+      const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+      const response = await fetch(`${BACKEND_URL}/api/applications`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dropoutSubmissionData),
+      });
 
-      const response = await fetch(url, { method: 'GET' });
       const result = await response.json();
       
 
