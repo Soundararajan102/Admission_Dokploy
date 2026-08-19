@@ -53,70 +53,53 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { logout } = useAuth();
 
-  // Fetch all applications
+  const [stats, setStats] = useState({
+    registered: 0, admittedList: 0, live: 0, pending: 0, cancelled: 0, departments: []
+  });
+  const [totalRecords, setTotalRecords] = useState(0);
+
+  const fetchStats = () => {
+    fetch(`${BACKEND_URL}/api/applications/stats`)
+      .then(res => res.json())
+      .then(data => setStats(data))
+      .catch(err => console.error(err));
+  };
+
   const fetchApplications = () => {
-    fetch(`${BACKEND_URL}/api/applications`)
+    const skip = (currentPage - 1) * entriesPerPage;
+    const url = new URL(`${BACKEND_URL}/api/applications`);
+    url.searchParams.append('skip', skip);
+    url.searchParams.append('limit', entriesPerPage);
+    if (search) url.searchParams.append('search', search);
+    if (filterStatus) url.searchParams.append('status_filter', filterStatus);
+    if (selectedDepartments.length > 0) url.searchParams.append('departments', selectedDepartments.join(','));
+
+    fetch(url)
       .then(res => res.json())
       .then(data => {
-        // Ensure data is an array, not an error object
-        if (Array.isArray(data)) {
-          // Reverse to show latest submissions first (stack/LIFO method)
-          setApplications(data.reverse());
-
-        } else if (data && data.error) {
-          setApplications([]);
+        if (data && data.data) {
+          setApplications(data.data);
+          setTotalRecords(data.total);
         } else {
           setApplications([]);
+          setTotalRecords(0);
         }
       })
       .catch(err => {
         setApplications([]);
+        setTotalRecords(0);
       });
   };
 
   useEffect(() => {
-    fetchApplications();
+    fetchStats();
   }, []);
 
-  const filteredApps = Array.isArray(applications) ? applications.filter((app) => {
-    // Search filter (only apply if there's a search term)
-    const matchesSearch = search === "" || 
-      (app.fullName && app.fullName.toLowerCase().includes(search.toLowerCase())) ||
-      (app.email && app.email.toLowerCase().includes(search.toLowerCase())) ||
-      (app.enquiryId && app.enquiryId.toLowerCase().includes(search.toLowerCase())) ||
-      (app.admissionId && app.admissionId.toLowerCase().includes(search.toLowerCase())) ||
-      (app.firstPreference && app.firstPreference.toLowerCase().includes(search.toLowerCase())) ||
-      (app.preference1 && app.preference1.toLowerCase().includes(search.toLowerCase())) ||
-      (app.department && app.department.toLowerCase().includes(search.toLowerCase()));
-    
-    // Handle different filter statuses
-    let matchesStatus = true;
-    if (filterStatus === "All") {
-      matchesStatus = true;
-    } else if (filterStatus === "AdmittedList") {
-      // Admitted List: Show all applications that have admission ID (ever admitted)
-      matchesStatus = app.admissionId && app.admissionId.trim() !== "";
-    } else if (filterStatus === "Live") {
-      // Live: Show only currently admitted students
-      matchesStatus = app.status === "Admitted";
-    } else {
-      // For other statuses (Pending, cancel)
-      matchesStatus = app.status === filterStatus;
-    }
-    
-    // Department filter
-    const appDept = app.firstPreference || app.preference1 || app.department || "";
-    const matchesDepartment = selectedDepartments.length === 0 || 
-      selectedDepartments.some(dept => appDept.toLowerCase().includes(dept.toLowerCase()));
-    
-    return matchesSearch && matchesStatus && matchesDepartment;
-  }) : [];
+  useEffect(() => {
+    fetchApplications();
+  }, [currentPage, entriesPerPage, search, filterStatus, selectedDepartments]);
 
-  // Extract unique departments from applications
-  const allDepartments = Array.from(new Set(
-    applications.map(app => app.firstPreference || app.preference1 || app.department)
-      .filter(dept => dept && dept.trim() !== "")
-  )).sort();
+  const allDepartments = stats.departments || [];
 
   // Toggle department selection
   const toggleDepartment = (dept) => {
@@ -132,10 +115,10 @@ export default function Dashboard() {
   };
 
   // Pagination calculations
-  const totalPages = Math.ceil(filteredApps.length / entriesPerPage);
+  const totalPages = Math.ceil(totalRecords / entriesPerPage);
+  const currentEntries = applications; // Already sliced by the backend
   const startIndex = (currentPage - 1) * entriesPerPage;
-  const endIndex = startIndex + entriesPerPage;
-  const currentEntries = filteredApps.slice(startIndex, endIndex);
+  const endIndex = startIndex + applications.length;
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -180,12 +163,11 @@ export default function Dashboard() {
   };
 
   // Dynamic counts
-  const totalCount = applications.length;
-  const registeredCount = totalCount; // All data coming in are registered students
-  const AdmittedCount = applications.filter(app => app.admissionId && app.admissionId !== "").length; // Ever admitted (has admission ID)
-  const LiveCount = applications.filter(app => app.status === "Admitted").length; // Currently admitted students
-  const PendingCount = applications.filter(app => app.status === "Pending").length;
-  const cancelCount = applications.filter(app => app.status === "cancelled").length;
+  const registeredCount = stats.registered;
+  const AdmittedCount = stats.admittedList;
+  const LiveCount = stats.live;
+  const PendingCount = stats.pending;
+  const cancelCount = stats.cancelled;
 
   const handleApplicationClick = () => {
     // Empty for now
@@ -202,11 +184,11 @@ export default function Dashboard() {
   }
 
   const handleUpdateSuccess = (updatedData) => {
- 
     // Refresh the applications list from server to get latest data
     // This ensures status, admission ID, and all fee information are current
     setTimeout(() => {
       fetchApplications();
+      fetchStats();
     }, 500); // Small delay to ensure backend has committed all changes
   }
 
@@ -261,7 +243,7 @@ export default function Dashboard() {
               </button>
               <span className="text-sm text-gray-400">|</span>
               <div className="text-sm font-medium text-gray-600 bg-white px-3 py-1 rounded-lg border border-gray-100 shadow-sm">
-                Total: <span className="font-bold text-gray-900">{totalCount}</span>
+                Total: <span className="font-bold text-gray-900">{stats.registered}</span>
               </div>
             </div>
           </header>
@@ -406,9 +388,7 @@ export default function Dashboard() {
                                 {dept}
                               </span>
                               <span className="text-xs text-gray-400 font-medium">
-                                {applications.filter(app => 
-                                  (app.firstPreference || app.preference1 || app.department) === dept
-                                ).length}
+                                {/* Count removed as pagination is server-side */}
                               </span>
                             </label>
                           ))
@@ -503,7 +483,7 @@ export default function Dashboard() {
             <div className="p-4 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center space-x-4">
                 <p className="text-xs text-gray-400 font-medium tracking-tight">
-                  Showing <span className="text-gray-600 font-bold">{startIndex + 1}</span> to <span className="text-gray-600 font-bold">{Math.min(endIndex, filteredApps.length)}</span> of <span className="text-gray-600 font-bold">{filteredApps.length}</span> entries
+                  Showing <span className="text-gray-600 font-bold">{totalRecords === 0 ? 0 : startIndex + 1}</span> to <span className="text-gray-600 font-bold">{Math.min(endIndex, totalRecords)}</span> of <span className="text-gray-600 font-bold">{totalRecords}</span> entries
                 </p>
                 <div className="flex items-center space-x-2">
                   <label className="text-xs text-gray-500 font-medium">Show:</label>

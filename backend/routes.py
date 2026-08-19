@@ -45,12 +45,77 @@ def create_application(app_in: schemas.StudentRecordCreate, db: Session = Depend
                 raise HTTPException(status_code=500, detail="System busy. Could not generate unique Enquiry ID. Please try again.")
             time.sleep(0.1) # Small delay before retry
 
+from sqlalchemy import or_, func
+from typing import Optional
+
+@router.get("/stats")
+def get_application_stats(db: Session = Depends(get_db)):
+    registered = db.query(models.StudentRecord).count()
+    admitted_list = db.query(models.StudentRecord).filter(models.StudentRecord.admissionId.isnot(None), models.StudentRecord.admissionId != "").count()
+    live = db.query(models.StudentRecord).filter(models.StudentRecord.status == "Admitted").count()
+    pending = db.query(models.StudentRecord).filter(models.StudentRecord.status == "Pending").count()
+    cancelled = db.query(models.StudentRecord).filter(models.StudentRecord.status.ilike("cancelled")).count()
+
+    depts_1 = db.query(models.StudentRecord.preference1).distinct().all()
+    all_depts = set([d[0] for d in depts_1 if d[0] and d[0].strip() != ""])
+
+    return {
+        "registered": registered,
+        "admittedList": admitted_list,
+        "live": live,
+        "pending": pending,
+        "cancelled": cancelled,
+        "departments": sorted(list(all_depts))
+    }
+
 @router.get("")
-def get_applications(db: Session = Depends(get_db)):
-    # Fetch all for the dashboard.
-    apps = db.query(models.StudentRecord).order_by(models.StudentRecord.enquiryId.asc()).all()
-    # Return as list, Pydantic will handle the serialization now since schemas match models exactly
-    return apps
+def get_applications(
+    skip: int = 0, 
+    limit: int = 10, 
+    search: Optional[str] = None, 
+    status_filter: Optional[str] = None, 
+    departments: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(models.StudentRecord)
+    
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            or_(
+                models.StudentRecord.fullName.ilike(search_term),
+                models.StudentRecord.email.ilike(search_term),
+                models.StudentRecord.enquiryId.ilike(search_term),
+                models.StudentRecord.admissionId.ilike(search_term),
+                models.StudentRecord.preference1.ilike(search_term)
+            )
+        )
+        
+    if status_filter and status_filter != "All":
+        if status_filter == "AdmittedList":
+            query = query.filter(models.StudentRecord.admissionId.isnot(None), models.StudentRecord.admissionId != "")
+        elif status_filter == "Live":
+            query = query.filter(models.StudentRecord.status == "Admitted")
+        else:
+            query = query.filter(models.StudentRecord.status.ilike(status_filter))
+            
+    if departments:
+        dept_list = [d.strip() for d in departments.split(',')]
+        dept_conditions = []
+        for d in dept_list:
+            d_term = f"%{d}%"
+            dept_conditions.append(models.StudentRecord.preference1.ilike(d_term))
+        if dept_conditions:
+            query = query.filter(or_(*dept_conditions))
+            
+    total = query.count()
+    # Order descending so the latest submissions show up first
+    apps = query.order_by(models.StudentRecord.enquiryId.desc()).offset(skip).limit(limit).all()
+    
+    return {
+        "data": apps,
+        "total": total
+    }
 
 @router.get("/admitted-students")
 def get_admitted_students(db: Session = Depends(get_db)):
