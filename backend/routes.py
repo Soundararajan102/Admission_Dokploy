@@ -9,36 +9,41 @@ from database import get_db
 
 router = APIRouter(prefix="/api/applications", tags=["applications"])
 
+from sqlalchemy.exc import IntegrityError
+import time
+
 @router.post("", response_model=schemas.StudentRecordResponse)
 def create_application(app_in: schemas.StudentRecordCreate, db: Session = Depends(get_db)):
-    # Generate Enquiry ID properly based on the last record
-    last_app = db.query(models.StudentRecord).order_by(models.StudentRecord.enquiryId.desc()).first()
-    if last_app and last_app.enquiryId.startswith("KN26EQ"):
-        try:
-            last_count = int(last_app.enquiryId.replace("KN26EQ", ""))
-            count = last_count
-        except:
-            count = db.query(models.StudentRecord).count()
-    else:
-        count = db.query(models.StudentRecord).count()
-        
-    padded_count = str(count + 1).zfill(4)
-    enquiry_id = f"KN26EQ{padded_count}"
-    
-    # Extract fields from dict
     data = app_in.model_dump(exclude_unset=True)
-    
-    # Set generated fields
-    data["enquiryId"] = enquiry_id
     data["date"] = datetime.now().strftime("%d-%m-%Y")
     data["applicationDate"] = datetime.now().strftime("%d-%m-%Y")
     
-    new_app = models.StudentRecord(**data)
-    
-    db.add(new_app)
-    db.commit()
-    db.refresh(new_app)
-    return new_app
+    max_retries = 5
+    for attempt in range(max_retries):
+        try:
+            # Generate Enquiry ID properly based on the last record
+            last_app = db.query(models.StudentRecord).order_by(models.StudentRecord.enquiryId.desc()).first()
+            if last_app and last_app.enquiryId.startswith("KN26EQ"):
+                try:
+                    count = int(last_app.enquiryId.replace("KN26EQ", ""))
+                except:
+                    count = db.query(models.StudentRecord).count()
+            else:
+                count = db.query(models.StudentRecord).count()
+                
+            padded_count = str(count + 1).zfill(4)
+            data["enquiryId"] = f"KN26EQ{padded_count}"
+            
+            new_app = models.StudentRecord(**data)
+            db.add(new_app)
+            db.commit()
+            db.refresh(new_app)
+            return new_app
+        except IntegrityError:
+            db.rollback()
+            if attempt == max_retries - 1:
+                raise HTTPException(status_code=500, detail="System busy. Could not generate unique Enquiry ID. Please try again.")
+            time.sleep(0.1) # Small delay before retry
 
 @router.get("")
 def get_applications(db: Session = Depends(get_db)):
@@ -60,49 +65,57 @@ def update_application(app_id: str, app_in: schemas.ApplicationUpdate, db: Sessi
 
 @router.put("/by-enquiry/{enquiry_id}")
 def update_by_enquiry(enquiry_id: str, app_update: dict, current_user: models.AdminUser = Depends(auth.get_current_user), db: Session = Depends(get_db)):
-    app = db.query(models.StudentRecord).filter(models.StudentRecord.enquiryId == enquiry_id).first()
-    if not app:
-        raise HTTPException(status_code=404, detail="Application not found")
-        
-        # Generate admissionId if admitted and doesn't have one
-    if "status" in app_update and app_update["status"] == "Admitted" and not app.admissionId:
-        last_admitted = db.query(models.StudentRecord).filter(models.StudentRecord.admissionId != None).order_by(models.StudentRecord.admissionId.desc()).first()
-        if last_admitted and last_admitted.admissionId.startswith("26KNF"):
-            try:
-                admitted_count = int(last_admitted.admissionId.replace("26KNF", ""))
-            except:
-                admitted_count = db.query(models.StudentRecord).filter(models.StudentRecord.admissionId != None).count()
-        else:
-            admitted_count = db.query(models.StudentRecord).filter(models.StudentRecord.admissionId != None).count()
-            
-        padded_count = str(admitted_count + 1).zfill(4)
-        app.admissionId = f"26KNF{padded_count}"
+    max_retries = 5
+    for attempt in range(max_retries):
+        try:
+            app = db.query(models.StudentRecord).filter(models.StudentRecord.enquiryId == enquiry_id).first()
+            if not app:
+                raise HTTPException(status_code=404, detail="Application not found")
+                
+            # Generate admissionId if admitted and doesn't have one
+            if "status" in app_update and app_update["status"] == "Admitted" and not app.admissionId:
+                last_admitted = db.query(models.StudentRecord).filter(models.StudentRecord.admissionId != None).order_by(models.StudentRecord.admissionId.desc()).first()
+                if last_admitted and last_admitted.admissionId.startswith("26KNF"):
+                    try:
+                        admitted_count = int(last_admitted.admissionId.replace("26KNF", ""))
+                    except:
+                        admitted_count = db.query(models.StudentRecord).filter(models.StudentRecord.admissionId != None).count()
+                else:
+                    admitted_count = db.query(models.StudentRecord).filter(models.StudentRecord.admissionId != None).count()
+                    
+                padded_count = str(admitted_count + 1).zfill(4)
+                app.admissionId = f"26KNF{padded_count}"
 
-    # Update fields dynamically
-    for key, value in app_update.items():
-        if hasattr(app, key):
-            setattr(app, key, value)
+            # Update fields dynamically
+            for key, value in app_update.items():
+                if hasattr(app, key):
+                    setattr(app, key, value)
 
-    # Handle AdmittedStudent table if status is Admitted
-    if app.status == "Admitted" and app.admissionId:
-        # Check if it already exists in admitted_students
-        admitted_record = db.query(models.AdmittedStudent).filter(models.AdmittedStudent.admissionId == app.admissionId).first()
-        
-        # Copy all fields except the primary key ID from StudentRecord
-        data_dict = {col.name: getattr(app, col.name) for col in app.__table__.columns if col.name != 'id'}
-        
-        if admitted_record:
-            # Update existing
-            for key, value in data_dict.items():
-                if hasattr(admitted_record, key):
-                    setattr(admitted_record, key, value)
-        else:
-            # Insert new
-            new_admitted = models.AdmittedStudent(**data_dict)
-            db.add(new_admitted)
+            # Handle AdmittedStudent table if status is Admitted
+            if app.status == "Admitted" and app.admissionId:
+                # Check if it already exists in admitted_students
+                admitted_record = db.query(models.AdmittedStudent).filter(models.AdmittedStudent.admissionId == app.admissionId).first()
+                
+                # Copy all fields except the primary key ID from StudentRecord
+                data_dict = {col.name: getattr(app, col.name) for col in app.__table__.columns if col.name != 'id'}
+                
+                if admitted_record:
+                    # Update existing
+                    for key, value in data_dict.items():
+                        if hasattr(admitted_record, key):
+                            setattr(admitted_record, key, value)
+                else:
+                    # Insert new
+                    new_admitted = models.AdmittedStudent(**data_dict)
+                    db.add(new_admitted)
 
-    db.commit()
-    return {"success": True, "message": "Updated successfully"}
+            db.commit()
+            return {"success": True, "message": "Updated successfully"}
+        except IntegrityError:
+            db.rollback()
+            if attempt == max_retries - 1:
+                raise HTTPException(status_code=500, detail="System busy. Could not generate unique Admission ID. Please try again.")
+            time.sleep(0.1)
 
 @router.get("/by-enquiry/{enquiry_id}")
 def get_by_enquiry(enquiry_id: str, db: Session = Depends(get_db)):
