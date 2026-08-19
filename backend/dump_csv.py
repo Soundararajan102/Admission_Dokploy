@@ -3,7 +3,8 @@ import csv
 import psycopg2
 from dotenv import load_dotenv
 
-_ = load_dotenv()
+# Load the dedicated migration environment file
+_ = load_dotenv(".env.migration")
 POSTGRES_URL = os.getenv("POSTGRES_URL")
 
 # Connect to database
@@ -56,8 +57,11 @@ def dump_csv_to_table(csv_path, table_name):
                 
         print(f"Successfully inserted {success_count} rows into {table_name}.")
 
-dump_csv_to_table("C:/Users/sound/Downloads/Admission Sheet Server - StudentRecords.csv", "student_records")
-dump_csv_to_table("C:/Users/sound/Downloads/Admission Sheet Server - AdmittedStudents.csv", "admitted_students")
+student_records_csv = os.getenv("STUDENT_RECORDS_CSV", "C:/Users/sound/Downloads/Admission Sheet Server - StudentRecords.csv")
+admitted_students_csv = os.getenv("ADMITTED_STUDENTS_CSV", "C:/Users/sound/Downloads/Admission Sheet Server - AdmittedStudents.csv")
+
+dump_csv_to_table(student_records_csv, "student_records")
+dump_csv_to_table(admitted_students_csv, "admitted_students")
 
 cur.close()
 conn.close()

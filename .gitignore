@@ -63,5 +63,11 @@ env/
 backend/venv/
 backend/.venv/
 
+# Environment files
+.env
+.env.*
+!.env.example
+.env.migration
+
 # Database
 *.sqlite3
