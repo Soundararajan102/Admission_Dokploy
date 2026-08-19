@@ -283,7 +283,8 @@ export default function PDFPreviewModal({
       // Map data to PDF fields
       
       // Basic Information
-      setTextField('admission-id', studentData.admissionId ||studentData.id || '');
+      const admId = (studentData.status === 'Admitted' && studentData.admissionId) ? studentData.admissionId : '';
+      setTextField('admission-id', admId);
       setTextField('date', formatDateForPDF(studentData.applicationDate || ''));
       setTextField('name', studentData.fullName || ''); 
       const dobValue = formatDateForPDF(studentData.dob);
@@ -1000,7 +1001,7 @@ export default function PDFPreviewModal({
 
   // Generate a clean filename from admission ID and student name
   const generateFileName = () => {
-    const admissionId = studentData.admissionId || studentData.id || 'N/A';
+    const admissionId = (studentData.status === 'Admitted' && studentData.admissionId) ? studentData.admissionId : (studentData.enquiryId || 'N/A');
     const fullName = (studentData.fullName || 'Student').replace(/[^a-zA-Z0-9]/g, '_');
     return `${admissionId}_${fullName}.pdf`;
   };
