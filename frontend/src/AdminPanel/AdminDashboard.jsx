@@ -97,6 +97,15 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchApplications();
+    
+    // Silently auto-refresh data every 5 seconds
+    const intervalId = setInterval(() => {
+      fetchStats();
+      fetchApplications();
+    }, 5000);
+    
+    // Cleanup interval on unmount or when dependencies change
+    return () => clearInterval(intervalId);
   }, [currentPage, entriesPerPage, search, filterStatus, selectedDepartments]);
 
   const allDepartments = stats.departments || [];

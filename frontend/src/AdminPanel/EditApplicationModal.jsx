@@ -2035,10 +2035,13 @@ export default function EditApplicationModal({
         const excludeFields = ['status', 'branchAwarded', 'gender', 'preference1', 'preference2', 'preference3', 'preference4', 'preference5', 'preference6', 'preference7', 'preference8', 'preference9', 'referencePrefix', 'referenceName', 'feesPaid', 'applicationDate'];
         const result = {};
         for (const [key, value] of Object.entries(data)) {
-          if (typeof value === 'string' && !excludeFields.includes(key)) {
-            result[key] = value.toUpperCase();
+          // Cast numbers and other types to string to satisfy Pydantic strict string validation
+          const safeValue = (value !== null && value !== undefined) ? String(value) : value;
+          
+          if (typeof safeValue === 'string' && !excludeFields.includes(key) && safeValue !== null) {
+            result[key] = safeValue.toUpperCase();
           } else {
-            result[key] = value;
+            result[key] = safeValue;
           }
         }
         return result;

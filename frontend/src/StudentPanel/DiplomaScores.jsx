@@ -236,13 +236,13 @@ const DiplomaScores = ({ personalData, setPersonalInfoErrors }) => {
         schoolName: diplomaDetails.diplomaInstitution || "",  // ✅ ADDED: Include schoolName from diploma institution
         // Score fields - all text in uppercase
         courseType: "DIPLOMA",
-        registerNumber: diplomaDetails.registerNo.toUpperCase(),
-        medium: diplomaDetails.program.toUpperCase(),
-        yearOfPassing: diplomaDetails.completionDate,
+        registerNumber: String(diplomaDetails.registerNo).toUpperCase(),
+        medium: String(diplomaDetails.program).toUpperCase(),
+        yearOfPassing: String(diplomaDetails.completionDate),
         subject1: "1ST TO 5TH SEMESTER",
-        subject1Marks: fifthSemMarks,
+        subject1Marks: String(fifthSemMarks),
         subject2: "1ST TO 6TH SEMESTER",
-        subject2Marks: sixthSemMarks,
+        subject2Marks: String(sixthSemMarks),
         date: new Date().toISOString()
       };
 
