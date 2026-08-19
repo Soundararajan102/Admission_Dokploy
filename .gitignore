@@ -47,3 +47,21 @@ build/
 .env
 backend/.env
 frontend/.env
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+backend/venv/
+backend/.venv/
+
+# Database
+*.sqlite3

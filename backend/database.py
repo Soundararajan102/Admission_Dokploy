@@ -1,20 +1,10 @@
-import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from dotenv import load_dotenv
+from config import settings
 
-load_dotenv()
+SQLALCHEMY_DATABASE_URL = settings.POSTGRES_URL
 
-# We'll use a local SQLite database for development if POSTGRES_URL is not set
-# Dokploy will provide the POSTGRES_URL environment variable
-SQLALCHEMY_DATABASE_URL = os.getenv("POSTGRES_URL", "sqlite:///./sql_app.db")
-
-if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
-    engine = create_engine(
-        SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-    )
-else:
-    engine = create_engine(SQLALCHEMY_DATABASE_URL)
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

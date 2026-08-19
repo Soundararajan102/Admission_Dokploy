@@ -3,9 +3,9 @@ uvicorn
 sqlalchemy
 psycopg2
 alembic
-pydantic
+pydantic[email]
 pydantic-settings
 python-jose[cryptography]
-passlib[bcrypt]
+bcrypt
 python-multipart
 python-dotenv

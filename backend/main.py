@@ -4,16 +4,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 
-from . import models, schemas, auth
-from .database import engine, get_db
+import models, schemas, auth
+from database import engine, get_db
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="KNCET Admission API")
 
+from config import settings
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict this
+    allow_origins=[settings.FRONTEND_URL], # Secure production origin
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -22,6 +24,7 @@ app.add_middleware(
 @app.on_event("startup")
 def create_initial_admin():
     # Helper to create an initial admin if none exists (for dev purposes)
+    print("Initial admin user created or already exists")
     db = next(get_db())
     admin = db.query(models.AdminUser).first()
     if not admin:
@@ -55,5 +58,5 @@ def read_users_me(current_user: models.AdminUser = Depends(auth.get_current_user
     return current_user
 
 # Include routes
-from .routes import router as applications_router
+from routes import router as applications_router
 app.include_router(applications_router)
