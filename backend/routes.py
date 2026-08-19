@@ -28,27 +28,33 @@ async def import_csv_temp(
         students_content = await students_file.read()
         students_reader = csv.DictReader(io.StringIO(students_content.decode('utf-8')))
         
-        student_records = []
+        student_records_dict = {}
         for row in students_reader:
             if not row.get('id'):
                 row['id'] = str(uuid.uuid4())
             for k, v in row.items():
                 if v == "":
                     row[k] = None
-            student_records.append(models.StudentRecord(**row))
+            if row.get('enquiryId'):
+                student_records_dict[row['enquiryId']] = models.StudentRecord(**row)
+        
+        student_records = list(student_records_dict.values())
             
         # Read admitted
         admitted_content = await admitted_file.read()
         admitted_reader = csv.DictReader(io.StringIO(admitted_content.decode('utf-8')))
         
-        admitted_records = []
+        admitted_records_dict = {}
         for row in admitted_reader:
             if not row.get('id'):
                 row['id'] = str(uuid.uuid4())
             for k, v in row.items():
                 if v == "":
                     row[k] = None
-            admitted_records.append(models.AdmittedStudent(**row))
+            if row.get('enquiryId'):
+                admitted_records_dict[row['enquiryId']] = models.AdmittedStudent(**row)
+                
+        admitted_records = list(admitted_records_dict.values())
             
         # Wipe DB
         db.query(models.StudentRecord).delete()
